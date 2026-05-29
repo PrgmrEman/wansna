@@ -1,365 +1,300 @@
-// نستورد useEffect لتشغيل المؤقت
-// ونستورد useState لتخزين بيانات اللعبة المتغيرة
-import { useEffect, useState } from "react";
-
-// نستورد useNavigate للرجوع إلى صفحة الألعاب
+// نستورد useEffect, useState, useRef من React
+import { useEffect, useState, useRef } from "react";
+// نستورد useNavigate للتنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
 
+// مدة الجولة: دقيقتان = 120 ثانية
+const ROUND_LIMIT = 120;
 
+// ====== كائن الصوت العام (سيتم إنشاؤه عند الحاجة) ======
+let audioCtx = null;
+
+// ====== دوال الصوت ======
+// تجهيز AudioContext (يُستدعى عند أول تفاعل)
+function prepareAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // تشغيل صوت صامت لتفعيل الإذن
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(0);
+    osc.stop(0.001);
+  } else if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+// تشغيل نغمة تنبيه قوية (عند نهاية الوقت)
+function playAlertBeep() {
+  try {
+    if (!audioCtx) return;
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.4); // أطول قليلاً ليكون واضحاً
+  } catch (e) { /* تجاهل */
+    console.warn("الصوت غير متاح:", e);
+   }
+}
+
+// تشغيل نغمة خلفية هادئة مستمرة
+function startBackgroundTone() {
+  if (!audioCtx) return;
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  // إنشاء مذبذب بنغمة منخفضة وهادئة
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "sine";      // موجة ناعمة
+  osc.frequency.value = 180; // هرتز منخفض (هدوء)
+  gain.gain.value = 0.06; // صوت خافت جداً
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  // إرجاع العقدتين لنتمكن من إيقافها لاحقاً
+  return { osc, gain };
+}
 
 /* =========================
     دوال مساعدة خارج المكوّن
-    حتى لا تسبب مشكلة purity
 ========================= */
 
-
-// دالة ترجع رقم عشوائي
+// إرجاع رقم عشوائي
 function getRandomIndex(length) {
   return Math.floor(Math.random() * length);
 }
 
-
-// دالة تخلط ترتيب عناصر Array
+// خلط عناصر المصفوفة
 function shuffleArray(array) {
   const shuffled = [...array];
-
   for (let i = shuffled.length - 1; i > 0; i--) {
     const randomIndex = getRandomIndex(i + 1);
-
     const temp = shuffled[i];
-
     shuffled[i] = shuffled[randomIndex];
-
     shuffled[randomIndex] = temp;
   }
-
   return shuffled;
 }
 
-
-// دالة تختار كلمة عشوائية من قائمة كلمات
-function pickRandomWord(words) {
-  const randomIndex = getRandomIndex(words.length);
-
-  return words[randomIndex];
-}
-
-
-// دالة تنشئ جولات عشوائية
+// إنشاء جولات اللعبة
 function buildRounds(players, words) {
   const shuffledGuests = shuffleArray(players);
-
   const shuffledHosts = shuffleArray(players);
+  const shuffledWords = shuffleArray(words);
 
-  const newRounds = shuffledGuests.map((guest, index) => {
+  return shuffledGuests.map((guest, index) => {
     let host = shuffledHosts[index];
-
     if (host === guest) {
       host = players.find((player) => player !== guest);
     }
-
     return {
       guest,
       host,
-      word: pickRandomWord(words)
+      word: shuffledWords[index % shuffledWords.length]
     };
   });
-
-  return newRounds;
 }
 
+/* =========================
+    مكوّن اللعبة الرئيسي
+========================= */
 
-
-// لعبة كلمة ممنوعة
 export default function ForbiddenWord() {
   const navigate = useNavigate();
 
-
-
-  /* =========================
-      قراءة اللاعبين
-  ========================= */
-
+  // قراءة اللاعبين المحفوظين
   const savedPlayers = localStorage.getItem("current-players");
-
   const players = savedPlayers ? JSON.parse(savedPlayers) : [];
 
-
-
-  /* =========================
-      الحالات المتغيرة
-  ========================= */
-
+  // ======== حالات اللعبة ========
   const [phase, setPhase] = useState("category");
-
-  const [, setCategory] = useState(null);
-
   const [rounds, setRounds] = useState([]);
-
   const [roundIndex, setRoundIndex] = useState(0);
-
   const [hostPlayer, setHostPlayer] = useState("");
-
   const [guestPlayer, setGuestPlayer] = useState("");
-
   const [forbiddenWord, setForbiddenWord] = useState("");
-
-  const [seconds, setSeconds] = useState(0);
-
+  const [seconds, setSeconds] = useState(0); // الثواني المنقضية
   const [isRunning, setIsRunning] = useState(false);
-
   const [roundResults, setRoundResults] = useState([]);
 
-
+  // مرجع لحفظ المؤقت الدوري
+  const timerRef = useRef(null);
+  // مرجع لحفظ عقد الصوت الخلفي الحالي (لإيقافه لاحقاً)
+  const bgSoundRef = useRef(null);
 
   /* =========================
       فئات الكلمات
   ========================= */
-
   const categories = {
     food: {
       title: "الأكل والمشروبات 🍔",
-      words: [
-        "قهوة",
-        "بيتزا",
-        "شاورما",
-        "مطعم",
-        "جوع",
-        "عصير",
-        "حلى",
-        "سبايسي"
-      ]
+      words: ["قهوة", "بيتزا", "شاورما", "مطعم", "جوع", "عصير", "حلى", "سبايسي", "سناك", "فطور","بيض","ورق عنب" ,"غداء","كبه" ,"عشاء","مطبخ","سفرة","مقبلات","مشروب غازي","شوكلاته","فواكه","خضار","لحم","سمك","دجاج","مندي","كبسه","مقلقل","جبن","برياني","فلافل","حمص","تبوله","كشري","رز","معكرونة","سوشي","رامن","كريب","وافل","آيس كريم","بسكويت","كعك","فطيرة","مربى","رجيم","زبدة","قشطة","لبن","زبادي","كاسترد","مخلل","سجق","برجر","هامبرغر","ملوخية","فتوش","كفتة","كباب","شوربة","سلطة","عصير طبيعي","ماء","شاي"]
     },
-
     feelings: {
       title: "العلاقات والمشاعر 💔",
-      words: [
-        "حب",
-        "زواج",
-        "غيرة",
-        "بلوك",
-        "كراش",
-        "زعل",
-        "صداقة",
-        "إعجاب",
-        "اهتمام",
-        "اهمال"
-      ]
+      words: ["حب","زواج","غيرة","بلوك","كراش","زعل","صداقة","إعجاب","خيانة","موعد","حنين","اشتياق","تواصل","تعارف","هدية","ارتباط","طلاق","تفاهم","وفاء","خجل","ثقة","احترام","تقدير","حنان","شوق","عاطفة","تعلق","تسامح","تضحية","عيد زواج","كراهية","خطوبة","اهتمام","إهمال","اعتراف"]
     },
-
     tech: {
       title: "الألعاب والتقنية 🎮",
-      words: [
-        "جوال",
-        "شاحن",
-        "تيك توك",
-        "إنترنت",
-        "تصوير",
-        "لايف",
-        "بلايستيشن",
-        "سماعة",
-        "ستوري",
-        "الستريك"
-      ]
+      words: ["جوال", "شاحن", "تيك توك", "إنترنت", "تصوير", "لايف", "بلايستيشن", "سماعة", "كمبيوتر", "لاب توب", "تلفزيون", "سوشيال ميديا", "يوتيوب", "تويتر X", "فيسبوك", "إنستغرام", "تيمز", "زووم", "تطبيق", "موقع", "برمجة", "هاك", "روبوت", "ذكاء اصطناعي", "واقع افتراضي", "بلوتوث", "واي فاي","سيلفي","فيديو جيم","بث مباشر","تغريدة","هاشتاق","فلتر","إيموجي","ميمز","تحدي تيك توك","تطبيق توصيل","بودكاست","واتساب"]
     },
-
     daily: {
       title: "الحياة اليومية 🏫",
-      words: [
-        "دوام",
-        "نوم",
-        "تأخير",
-        "اختبار",
-        "مدرسة",
-        "جامعة",
-        "واجب",
-        "مشوار",
-        "زيارة",
-
-      ]
+      words: ["دوام", "نوم", "تأخير", "اختبار", "مدرسة", "جامعة", "واجب", "مشوار", "زحمة", "مواصلات", "سوق", "مطبخ", "ممطر", "مشمس", "تسوق",  "عزيمة", "استيقاظ", "استحمام", "مواعيد", "عمل منزلي", "مكتب", "اجتماع",  "تقويم", "تخطيط يومي","صباح","ليل","استراحة","تعب","نشاط","رياضة","تمرين","إجازة","انتظار","روتين","سهره","راتب","مصعد","حر","برد","ساعة"]
     },
-
     travel: {
       title: "السفر والترفيه ✈️",
-      words: [
-        "سفر",
-        "مطار",
-        "بحر",
-        "فندق",
-        "إجازة",
-        "سيارة",
-        "طلعة",
-        "تصوير"
-      ]
+      words: ["سفر", "مطار", "بحر", "فندق", "إجازة", "سيارة", "طلعة", "تصوير", "تخييم", "رحلة", "شاطئ", "جبل", "منتجع", "تذكرة", "خريطة", "دليل سياحي", "مغامرة", "استكشاف", "تذكرة طيران", "حقيبة سفر", "جواز سفر", "تأشيرة", "رحلة بحرية", "سفاري", "تزلج","متنزه","متحف","معالم سياحية","كروز","رحلة برية","تسلق جبال","غوص","غطس","رحلة قطار","سباحة ","تذكرة حفل","مهرجان"]
     }
   };
 
-
-
   /* =========================
-      المؤقت
+      إدارة المؤقت
   ========================= */
-
   useEffect(() => {
     let timer;
-
     if (isRunning) {
       timer = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
     }
-
     return () => clearInterval(timer);
   }, [isRunning]);
 
+  // مراقبة انتهاء الوقت
+  useEffect(() => {
+    if (isRunning && seconds >= ROUND_LIMIT) {
+      // إيقاف النغمة الخلفية أولاً
+      if (bgSoundRef.current) {
+        const { osc, gain } = bgSoundRef.current;
+        osc.stop();
+        gain.disconnect();
+        bgSoundRef.current = null;
+      }
+      // تشغيل نغمة التنبيه القوية
+      playAlertBeep();
+      // إنهاء الجولة
+      finishRound("timeup");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, isRunning]);
 
-
-  /* =========================
-      تنسيق الوقت
-  ========================= */
-
+  // تنسيق الوقت MM:SS
   function formatTime(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
-
     const secs = totalSeconds % 60;
-
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
 
-
-
   /* =========================
-      إنشاء الجولات
+      دوال بدء وإنهاء الجولات
   ========================= */
 
   function createRounds(categoryKey) {
+    prepareAudio();
     const words = categories[categoryKey].words;
-
     const newRounds = buildRounds(players, words);
-
-    setCategory(categoryKey);
-
     setRounds(newRounds);
-
     setRoundIndex(0);
-
     setGuestPlayer(newRounds[0].guest);
-
     setHostPlayer(newRounds[0].host);
-
     setForbiddenWord(newRounds[0].word);
-
     setSeconds(0);
-
     setIsRunning(false);
-
+    setRoundResults([]);
     setPhase("roundIntro");
   }
 
-
-
-  /* =========================
-      بدء المؤقت
-  ========================= */
-
+  // بدء الجولة: يبدأ النغمة الهادئة والمؤقت
   function startTimer() {
+    prepareAudio();
+    // بدء النغمة الهادئة المستمرة
+    if (!bgSoundRef.current) {
+      bgSoundRef.current = startBackgroundTone();
+    }
     setSeconds(0);
-
     setIsRunning(true);
+    setPhase("playing");
   }
 
-
-
-  /* =========================
-      إيقاف المؤقت
-  ========================= */
-
-  function stopTimer() {
+  // إنهاء الجولة (يدوي أو تلقائي)
+  function finishRound(resultType) {
+    // إيقاف النغمة الهادئة إن كانت شغالة
+    if (bgSoundRef.current) {
+      const { osc, gain } = bgSoundRef.current;
+      try { osc.stop(); } catch (e) {
+        console.warn("خطأ أثناء إيقاف الصوت:", e);
+      }
+      gain.disconnect();
+      bgSoundRef.current = null;
+    }
+    // إيقاف المؤقت
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsRunning(false);
 
     const result = {
       host: hostPlayer,
       guest: guestPlayer,
       word: forbiddenWord,
-      time: seconds
+      time: seconds,
+      type: resultType
     };
-
-    setRoundResults([...roundResults, result]);
-
+    setRoundResults((prev) => [...prev, result]);
     setPhase("roundResult");
   }
 
-
-
-  /* =========================
-      الجولة التالية
-  ========================= */
-
   function nextRound() {
     const nextIndex = roundIndex + 1;
-
     if (nextIndex >= rounds.length) {
       setPhase("finalResults");
       return;
     }
-
     const nextRoundData = rounds[nextIndex];
-
     setRoundIndex(nextIndex);
-
     setGuestPlayer(nextRoundData.guest);
-
     setHostPlayer(nextRoundData.host);
-
     setForbiddenWord(nextRoundData.word);
-
     setSeconds(0);
-
     setIsRunning(false);
-
     setPhase("roundIntro");
   }
 
-
-
   /* =========================
-      إذا ما فيه لاعبين
+      حالة عدم وجود لاعبين
   ========================= */
-
   if (players.length === 0) {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2>ما فيه لاعبين محفوظين</h2>
-
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+          <button style={mainButton} onClick={() => navigate("/games")}>رجوع للألعاب</button>
         </div>
       </div>
     );
   }
 
-
-
   /* =========================
-      اختيار الفئة
+      شاشة اختيار الفئة
   ========================= */
-
   if (phase === "category") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <h1 style={titleStyle}>الكلمة ممنوعة 🤫</h1>
-
+          <h1 style={titleStyle}>كلمة ممنوعة 🤫</h1>
           <p style={textStyle}>اختاروا موضوع اللعبة</p>
-
           {Object.entries(categories).map(([key, item]) => (
-            <button
-              key={key}
-              style={mainButton}
-              onClick={() => createRounds(key)}
-            >
+            <button key={key} style={mainButton} onClick={() => createRounds(key)}>
               {item.title}
             </button>
           ))}
@@ -368,241 +303,195 @@ export default function ForbiddenWord() {
     );
   }
 
-
-
   /* =========================
-      مقدمة الجولة
+      شاشة مقدمة الجولة
   ========================= */
-
   if (phase === "roundIntro") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <p style={textStyle}>
-            الجولة {roundIndex + 1} من {rounds.length}
-          </p>
-
+          <p style={textStyle}>الجولة {roundIndex + 1} من {rounds.length}</p>
           <h1 style={titleStyle}>الجولة بين</h1>
-
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>المحاور</p>
-
             <h2 dir="auto">{hostPlayer}</h2>
           </div>
-
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>الضيف</p>
-
             <h2 dir="auto">{guestPlayer}</h2>
           </div>
-
           <p style={textStyle}>مرروا الجوال للمحاور</p>
-
-          <button style={mainButton} onClick={() => setPhase("hostBrief")}>
-            هذا أنا، ابدأ
-          </button>
+          <button style={mainButton} onClick={() => setPhase("hostBrief")}>هذا أنا، ابدأ</button>
         </div>
       </div>
     );
   }
 
-
-
   /* =========================
-      تعليمات المحاور
+      شاشة تعليمات المحاور
   ========================= */
-
   if (phase === "hostBrief") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2 style={titleStyle}>مهمتك 🎤</h2>
-
-          <p style={textStyle}>
-            استدرج الضيف ليقول الكلمة الممنوعة
-          </p>
-
+          <p style={textStyle}>استدرج الضيف أن يقول الكلمة الممنوعة</p>
           <div style={wordCardStyle}>
             <p style={roleLabelStyle}>الكلمة الممنوعة</p>
-
             <h1 style={forbiddenWordStyle}>{forbiddenWord}</h1>
           </div>
-
-          <p style={textStyle}>
-            عندما يبدأ الحوار اضغط ابدأ
-          </p>
-
-          <button
-            style={greenButton}
-            onClick={() => {
-              startTimer();
-              setPhase("playing");
-            }}
-          >
-            ابدأ
-          </button>
+          <p style={textStyle}>عند بداية الحوار اضغط ابدأ. لديك دقيقتان.</p>
+          <div style={buttonsContainerStyle}>
+            <button style={greenButton} onClick={startTimer}>
+              <strong>ابدأ</strong>
+              <small>ابدأ احتساب وقت الحوار</small>
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-
-
   /* =========================
-      اللعب والمؤقت
+      شاشة اللعب
   ========================= */
-
   if (phase === "playing") {
+    const remainingSeconds = Math.max(ROUND_LIMIT - seconds, 0);
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2 style={titleStyle}>الحوار مستمر 🎤</h2>
-
-          <p style={textStyle}>
-            المحاور: <span dir="auto">{hostPlayer}</span>
-            <br />
-            الضيف: <span dir="auto">{guestPlayer}</span>
-          </p>
-
-          <div style={timerStyle}>{formatTime(seconds)}</div>
-
-          <button style={dangerButton} onClick={stopTimer}>
-            توقف
-          </button>
+          <p style={textStyle}>المحاور: <span dir="auto">{hostPlayer}</span><br />الضيف: <span dir="auto">{guestPlayer}</span></p>
+          <div style={timerStyle}>{formatTime(remainingSeconds)}</div>
+          <div style={buttonsContainerStyle}>
+            <button style={dangerButton} onClick={() => finishRound("said")}>
+              <strong>توقف</strong><small>قال الضيف الكلمة الممنوعة</small>
+            </button>
+            <button style={orangeButton} onClick={() => finishRound("guessed")}>
+              <strong>اكتشف الكلمة</strong><small>عرف الضيف الكلمة الممنوعة</small>
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-
-
   /* =========================
-      نتيجة الجولة
+      شاشة نتيجة الجولة
   ========================= */
-
   if (phase === "roundResult") {
+    const lastResult = roundResults[roundResults.length - 1];
+    let resultMessage = "";
+    if (lastResult?.type === "said") resultMessage = "المحاور نجح في استدراج الضيف للكلمة الممنوعة.";
+    else if (lastResult?.type === "guessed") resultMessage = "الضيف كان فطين واكتشف الكلمة الممنوعة.";
+    else if (lastResult?.type === "timeup") resultMessage = "الضيف صمد حتى نهاية الوقت.";
+
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>انتهت الجولة 😭</h1>
-
-          <p style={textStyle}>
-            استغرق المحاور
-          </p>
-
-          <h2 dir="auto" style={{ margin: "6px 0" }}>
-            {hostPlayer}
-          </h2>
-
-          <p style={textStyle}>
-            مدة <strong>{formatTime(seconds)}</strong>
-          </p>
-
-          <p style={textStyle}>
-            في استدراج الضيف
-          </p>
-
-          <h2 dir="auto" style={{ margin: "6px 0" }}>
-            {guestPlayer}
-          </h2>
-
-          <p style={textStyle}>
-            للكلمة الممنوعة
-          </p>
-
-          <button style={mainButton} onClick={nextRound}>
-            الجولة التالية
-          </button>
+          <p style={textStyle}>{resultMessage}</p>
+          <p style={textStyle}>المحاور</p><h2 dir="auto">{hostPlayer}</h2>
+          <p style={textStyle}>الضيف</p><h2 dir="auto">{guestPlayer}</h2>
+          <p style={textStyle}>الوقت المستغرق: <strong>{formatTime(lastResult?.time || 0)}</strong></p>
+          <button style={mainButton} onClick={nextRound}>الجولة التالية</button>
         </div>
       </div>
     );
   }
 
-
-
   /* =========================
-      النتائج النهائية
+      شاشة النتائج النهائية
   ========================= */
-
   if (phase === "finalResults") {
-    const sortedByGuestTime = [...roundResults].sort(
-      (a, b) => b.time - a.time
-    );
+    const hostWins = roundResults.filter(r => r.type === "said");
+    const smartGuests = roundResults.filter(r => r.type === "guessed");
 
-    const sortedByHostSpeed = [...roundResults].sort(
-      (a, b) => a.time - b.time
-    );
+    function getAllTopResults(list, compareFn) {
+      if (list.length === 0) return [];
+      const sorted = [...list].sort(compareFn);
+      const best = sorted[0];
+      return sorted.filter(item => compareFn(item, best) === 0);
+    }
 
-    const bestGuest = sortedByGuestTime[0];
-
-    const bestHost = sortedByHostSpeed[0];
+    const bestHosts = hostWins.length > 0
+      ? getAllTopResults(hostWins, (a, b) => a.time - b.time)
+      : [];
+    const bestGuests = getAllTopResults(roundResults, (a, b) => b.time - a.time);
+    const bestSmartGuests = smartGuests.length > 0
+      ? getAllTopResults(smartGuests, (a, b) => a.time - b.time)
+      : [];
 
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>انتهت اللعبة 🏆</h1>
-
           <div style={winnerGridStyle}>
             <div style={winnerCardStyle}>
               <div style={winnerIconStyle}>🎤👑</div>
-
               <p style={roleLabelStyle}>أفضل محاور</p>
-
-              <h2 dir="auto">{bestHost.host}</h2>
-
-              <p style={textStyle}>
-                أسقط الضيف خلال {formatTime(bestHost.time)}
-              </p>
+              <p style={winnerDescriptionStyle}>أسرع شخص أسقط ضيفًا</p>
+              {bestHosts.length > 0 ? (
+                bestHosts.map((h, i) => (
+                  <div key={i}>
+                    <h2 dir="auto">{h.host}</h2>
+                    <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
+                  </div>
+                ))
+              ) : (
+                <p style={textStyle}>ما أحد أسقط ضيفه 😭</p>
+              )}
             </div>
-
             <div style={winnerCardStyle}>
               <div style={winnerIconStyle}>🛡️👑</div>
-
               <p style={roleLabelStyle}>أفضل ضيف</p>
-
-              <h2 dir="auto">{bestGuest.guest}</h2>
-
-              <p style={textStyle}>
-                صمد {formatTime(bestGuest.time)}
-              </p>
+              <p style={winnerDescriptionStyle}>أطول شخص صمد أمام المحاور</p>
+              {bestGuests.map((g, i) => (
+                <div key={i}>
+                  <h2 dir="auto">{g.guest}</h2>
+                  <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
+                </div>
+              ))}
             </div>
           </div>
-
-          <h3 style={{ marginTop: "24px" }}>
-            تفاصيل الجولات
-          </h3>
-
+          <div style={smartGuestCardStyle}>
+            <div style={winnerIconStyle}>🧠✨</div>
+            <p style={roleLabelStyle}>الضيف الفطين</p>
+            <p style={winnerDescriptionStyle}>أسرع شخص اكتشف الكلمة</p>
+            {bestSmartGuests.length > 0 ? (
+              bestSmartGuests.map((s, i) => (
+                <div key={i}>
+                  <h2 dir="auto">{s.guest}</h2>
+                  <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
+                </div>
+              ))
+            ) : (
+              <p style={textStyle}>ما أحد اكتشف الكلمة هذه المرة</p>
+            )}
+          </div>
+          <h3 style={{ marginTop: "24px" }}>تفاصيل الجولات</h3>
           {roundResults.map((result, index) => (
             <div key={index} style={resultItemStyle}>
               <span>الجولة {index + 1}: </span>
-
               <span dir="auto">{result.host}</span>
-
-              <span> استدرج </span>
-
+              <span> مع </span>
               <span dir="auto">{result.guest}</span>
-
-              <span> خلال {formatTime(result.time)}</span>
+              <span> — {formatTime(result.time)}</span>
             </div>
           ))}
-
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+          <br />
+          <button style={mainButton} onClick={() => navigate("/games")}>رجوع للألعاب</button>
         </div>
       </div>
     );
   }
 }
 
-
-
 /* =========================
-    التنسيقات
+    التنسيقات (CSS-in-JS)
 ========================= */
-
 const pageStyle = {
-  minHeight: "100vh",
+  minHeight: "100dvh",
   background: "#f7f5ff",
   display: "flex",
   justifyContent: "center",
@@ -625,10 +514,11 @@ const cardStyle = {
 const titleStyle = {
   color: "#6C4CF1",
   marginTop: 0,
-  padding: 5,
-  fontSize: "25px",
-  fontWeight: 700,
+  marginBottom: "12px",
   fontFamily: "Cairo, sans-serif",
+  fontSize: "30px",
+  fontWeight: 700,
+  padding: "6px"
 };
 
 const textStyle = {
@@ -638,8 +528,8 @@ const textStyle = {
 
 const mainButton = {
   width: "100%",
-  marginTop: "14px",
-  padding: "14px",
+  minHeight: "76px",
+  padding: "10px",
   background: "#6C4CF1",
   color: "white",
   border: "none",
@@ -647,17 +537,25 @@ const mainButton = {
   fontSize: "17px",
   fontWeight: 700,
   cursor: "pointer",
-  fontFamily: "Cairo, sans-serif"
+  fontFamily: "Cairo, sans-serif",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "4px",
+  lineHeight: 1.4,
+  marginBottom: "12px"
 };
 
-const greenButton = {
-  ...mainButton,
-  background: "#2f9e44"
-};
+const greenButton = { ...mainButton, background: "#2f9e44" };
+const dangerButton = { ...mainButton, background: "#ff4d6d" };
+const orangeButton = { ...mainButton, background: "#f59f00" };
 
-const dangerButton = {
-  ...mainButton,
-  background: "#ff4d6d"
+const buttonsContainerStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  marginTop: "20px"
 };
 
 const roleCardStyle = {
@@ -670,7 +568,8 @@ const roleCardStyle = {
 const roleLabelStyle = {
   color: "#6C4CF1",
   fontWeight: 700,
-  marginBottom: "6px"
+  marginBottom: "6px",
+  fontFamily: "Cairo, sans-serif"
 };
 
 const wordCardStyle = {
@@ -702,16 +601,8 @@ const timerStyle = {
   borderRadius: "20px",
   fontSize: "48px",
   fontWeight: 700,
-  margin: "24px 0"
-};
-
-const resultItemStyle = {
-  background: "#f7f5ff",
-  padding: "14px",
-  borderRadius: "14px",
-  marginTop: "10px",
-  fontWeight: 700,
-  lineHeight: 1.8
+  margin: "24px 0",
+  fontFamily: "Cairo, sans-serif"
 };
 
 const winnerGridStyle = {
@@ -725,10 +616,44 @@ const winnerCardStyle = {
   background: "#f7f5ff",
   padding: "16px",
   borderRadius: "18px",
-  textAlign: "center"
+  textAlign: "center",
+  minHeight: "220px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between"
 };
 
-const winnerIconStyle = {
-  fontSize: "34px",
-  marginBottom: "6px"
+const smartGuestCardStyle = {
+  background: "#fff8e1",
+  padding: "16px",
+  borderRadius: "18px",
+  textAlign: "center",
+  marginTop: "12px"
+};
+
+const winnerIconStyle = { fontSize: "34px", marginBottom: "6px" };
+
+const winnerDescriptionStyle = {
+  color: "#888",
+  fontSize: "14px",
+  lineHeight: 1.6,
+  minHeight: "45px",
+  marginTop: "4px"
+};
+
+const winnerTimeStyle = {
+  fontSize: "18px",
+  fontWeight: "700",
+  color: "#6C4CF1",
+  marginTop: "8px",
+  fontFamily: "Cairo, sans-serif"
+};
+
+const resultItemStyle = {
+  background: "#f7f5ff",
+  padding: "14px",
+  borderRadius: "14px",
+  marginTop: "10px",
+  fontWeight: 700,
+  lineHeight: 1.8
 };

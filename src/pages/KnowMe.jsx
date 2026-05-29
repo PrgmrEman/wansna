@@ -550,7 +550,7 @@ function PassOverlay({ playerName, message, buttonText, onConfirm }) {
 ========================= */
 
 const pageStyle = {
-  minHeight: "100vh",
+  minHeight: "100dvh",
   background: "#f7f5ff",
   display: "flex",
   justifyContent: "center",

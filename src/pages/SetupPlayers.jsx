@@ -20,7 +20,7 @@ export default function SetupPlayers() {
   // أسماء الألعاب
   const gameNames = {
     "who-said": "من قالها؟ 😂",
-    "forbidden-word": "كلمة ممنوعة 🤫",
+    "forbidden-word": " الكلمة الممنوعة🤫",
     "know-me": "من يعرفني أكثر؟ 👀"
   };
 
@@ -167,7 +167,10 @@ export default function SetupPlayers() {
       {/* عنوان اللعبة */}
       <h1 style={{
         color: "#6C4CF1",
-        textAlign: "center"
+        textAlign: "center",
+        paddingBottom: "12px",
+        fontSize: "50px",
+        
       }}>
         {gameNames[gameId]}
       </h1>

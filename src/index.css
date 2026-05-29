@@ -115,3 +115,16 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+ input,
+textarea {
+  background: white !important;
+  color: #222 !important;
+  -webkit-text-fill-color: #222;
+}
+
+input:focus,
+textarea:focus {
+  background: white !important;
+  color: #222 !important;
+  outline: none;
+}

@@ -9,6 +9,7 @@ import SetupPlayers from "./pages/SetupPlayers";
 import WhoSaid from "./pages/WhoSaid";
 import KnowMe from "./pages/KnowMe";
 import ForbiddenWord from "./pages/ForbiddenWord";
+import Support from "./pages/Support";
 
 
 // التطبيق الرئيسي
@@ -36,6 +37,10 @@ export default function App() {
 
       {/* صفحة "الكلمة الممنوعة" */}
       <Route path="/play/forbidden-word" element={<ForbiddenWord />} />
+      
+      {/* صفحة الدعم */}
+
+      <Route path="/support" element={<Support />} />
 
     </Routes>
   );

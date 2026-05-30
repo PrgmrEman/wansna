@@ -173,8 +173,6 @@ export default function ForbiddenWord() {
   const [isRunning, setIsRunning] = useState(false);
   const [roundResults, setRoundResults] = useState([]);
 
-  // مرجع لحفظ المؤقت الدوري
-  const timerRef = useRef(null);
 
   // مرجع لحفظ عقد الصوت الخلفي الحالي لإيقافه لاحقًا
   const bgSoundRef = useRef(null);
@@ -351,11 +349,7 @@ export default function ForbiddenWord() {
       bgSoundRef.current = null;
     }
 
-    // إيقاف المؤقت
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    
 
     setIsRunning(false);
 
@@ -507,12 +501,16 @@ export default function ForbiddenWord() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2 style={titleStyle}>الحوار مستمر 🎤</h2>
+        
+          <p style={textStyle}>المحاور</p>
+          <h2 style={textH2}>{hostPlayer}</h2>
 
-          <p style={textStyle}>
-            المحاور: <span dir="auto">{hostPlayer}</span>
-            <br />
-            الضيف: <span dir="auto">{guestPlayer}</span>
-          </p>
+          
+          <p style={textStyle}>الضيف</p>
+          <h2 style={textH2}>{guestPlayer}</h2>
+        
+
+
 
           <div style={timerStyle}>{formatTime(remainingSeconds)}</div>
 

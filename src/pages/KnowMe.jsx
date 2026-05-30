@@ -1,289 +1,288 @@
-// نستورد useState عشان نخزن البيانات المتغيرة
-import { useState } from "react";
-
-// نستورد useNavigate عشان نقدر نرجع لصفحة الألعاب
+import { useReducer, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// =========================
+//    دوال مساعدة خارج المكوّن
+// =========================
 
-// دالة خارج المكوّن تخلط ترتيب الخيارات
-// وضعناها خارج المكوّن حتى لا تسبب مشاكل purity في React
-function shuffleOptions(options) {
-  // ننسخ المصفوفة عشان ما نعدل الأصل
-  const shuffled = [...options];
-
-  // خلط Fisher-Yates
+/** تخلط ترتيب المصفوفة عشوائياً */
+function shuffleArray(array) {
+  const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const randomIndex = Math.floor(Math.random() * (i + 1));
-
-    const temp = shuffled[i];
-    shuffled[i] = shuffled[randomIndex];
-    shuffled[randomIndex] = temp;
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-
   return shuffled;
 }
 
-
-// دالة تبني خيارات السؤال وتخلطها
+/** تبني خيارات السؤال (الصحيحة + الخاطئتين) وتخلطها */
 function createAnswerOptions(question) {
-  return shuffleOptions([
-    question.correctAnswer,
-    question.wrong1,
-    question.wrong2
-  ]);
+  return shuffleArray([question.correctAnswer, question.wrong1, question.wrong2]);
 }
 
+/** تنشئ سؤالاً فارغاً مع معرّف فريد */
+function createEmptyQuestion() {
+  return {
+    id: crypto.randomUUID(),
+    question: "",
+    correctAnswer: "",
+    wrong1: "",
+    wrong2: "",
+  };
+}
 
-// صفحة لعبة مين يعرفني أكثر
+/** تختار لاعباً عشوائياً مع إمكانية استبعاد لاعب معيّن */
+function getRandomPlayerExcept(players, excludedPlayer) {
+  const available = players.filter((p) => p !== excludedPlayer);
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+// =========================
+//     مُخزّن الحالات (Reducer)
+// =========================
+
+const initialState = {
+  phase: "choose",         // choose | questions | answering | prediction | results
+  mainPlayer: null,
+  questions: [
+    createEmptyQuestion(),
+    createEmptyQuestion(),
+    createEmptyQuestion(),
+  ],
+  answeringIndex: 0,
+  questionIndex: 0,
+  scores: {},
+  showPassScreen: true,
+  answerOptions: [],
+  predictedPlayer: null,
+};
+
+function gameReducer(state, action) {
+  switch (action.type) {
+    case "CHOOSE_MAIN_PLAYER": {
+      const main = getRandomPlayerExcept(action.players, null);
+      return { ...state, mainPlayer: main, phase: "questions" };
+    }
+
+    case "UPDATE_QUESTION": {
+      const updated = state.questions.map((q) =>
+        q.id === action.id ? { ...q, [action.field]: action.value } : q
+      );
+      return { ...state, questions: updated };
+    }
+
+    case "ADD_QUESTION": {
+      if (state.questions.length >= 5) return state; // الحد الأقصى
+      return { ...state, questions: [...state.questions, createEmptyQuestion()] };
+    }
+
+    case "DELETE_QUESTION": {
+      const filtered = state.questions.filter((q) => q.id !== action.id);
+      return { ...state, questions: filtered };
+    }
+
+    case "START_ANSWERING": {
+      const clean = action.questions;
+      const initialScores = {};
+      action.answerPlayers.forEach((p) => (initialScores[p] = 0));
+      return {
+        ...state,
+        questions: clean,
+        scores: initialScores,
+        answeringIndex: 0,
+        questionIndex: 0,
+        answerOptions: createAnswerOptions(clean[0]),
+        phase: "answering",
+        showPassScreen: true,
+      };
+    }
+
+    case "SELECT_ANSWER": {
+      const { isCorrect, currentPlayer, hasNextPlayer, nextPlayerIndex, hasNextQuestion, nextQuestionIndex, nextQuestion } = action;
+      // تحديث النقاط
+      const newScores = { ...state.scores };
+      if (isCorrect) {
+        newScores[currentPlayer] += 1;
+      }
+
+      if (hasNextPlayer) {
+        // نفس السؤال للاعب التالي (نعيد خلط الخيارات)
+        const currentQ = state.questions[state.questionIndex];
+        return {
+          ...state,
+          scores: newScores,
+          answeringIndex: nextPlayerIndex,
+          answerOptions: createAnswerOptions(currentQ),
+          showPassScreen: true,
+        };
+      }
+
+      if (hasNextQuestion) {
+        // السؤال التالي مع أول لاعب
+        return {
+          ...state,
+          scores: newScores,
+          questionIndex: nextQuestionIndex,
+          answeringIndex: 0,
+          answerOptions: createAnswerOptions(nextQuestion),
+          showPassScreen: true,
+        };
+      }
+
+      // انتهت جميع الأسئلة، انتقل للتوقع
+      return {
+        ...state,
+        scores: newScores,
+        phase: "prediction",
+        showPassScreen: true,
+      };
+    }
+
+    case "PREDICT": {
+      return { ...state, predictedPlayer: action.player, phase: "results" };
+    }
+
+    case "HIDE_PASS_SCREEN": {
+      return { ...state, showPassScreen: false };
+    }
+
+    case "NEW_ROUND": {
+      const newMain = getRandomPlayerExcept(action.players, state.mainPlayer);
+      const freshQuestions = [
+        createEmptyQuestion(),
+        createEmptyQuestion(),
+        createEmptyQuestion(),
+      ];
+      return {
+        ...initialState,
+        questions: freshQuestions,
+        mainPlayer: newMain,
+        phase: "questions",
+      };
+    }
+
+    default:
+      return state;
+  }
+}
+
+// =========================
+//        المكون الرئيسي
+// =========================
+
 export default function KnowMe() {
-  // أداة التنقل
   const navigate = useNavigate();
 
-  // قراءة اللاعبين المحفوظين من صفحة إعداد اللاعبين
-  const savedPlayers = localStorage.getItem("current-players");
-
-  // تحويل اللاعبين من JSON إلى Array
-  const players = savedPlayers ? JSON.parse(savedPlayers) : [];
-
-
-  /* =========================
-      STATES
-  ========================= */
-
-  // المرحلة الحالية
-  // choose = اختيار اللاعب الأساسي
-  // questions = كتابة الأسئلة
-  // answering = إجابات اللاعبين
-  // prediction = توقع اللاعب الأساسي
-  // results = النتائج
-  const [phase, setPhase] = useState("choose");
-
-  // اللاعب الأساسي الذي ستكون الجولة عنه
-  const [mainPlayer, setMainPlayer] = useState(null);
-
-  // الأسئلة التي يكتبها اللاعب الأساسي
-  const [questions, setQuestions] = useState([
-    {
-      question: "",
-      correctAnswer: "",
-      wrong1: "",
-      wrong2: ""
+  // قراءة اللاعبين مرة واحدة عند التحميل
+  const [players] = useState(() => {
+    try {
+      const saved = localStorage.getItem("current-players");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  // اللاعب الحالي الذي يجيب
-  const [answeringIndex, setAnsweringIndex] = useState(0);
+  const [state, dispatch] = useReducer(gameReducer, initialState);
 
-  // السؤال الحالي
-  const [questionIndex, setQuestionIndex] = useState(0);
+  // اللاعبون الذين سيجيبون (باستثناء اللاعب الأساسي)
+  const answerPlayers = players.filter((p) => p !== state.mainPlayer);
 
-  // نقاط اللاعبين
-  const [scores, setScores] = useState({});
+  // ============ دوال الأحداث ============
 
-  // شاشة تمرير الجوال
-  const [showPassScreen, setShowPassScreen] = useState(true);
+  const chooseRandomPlayer = useCallback(() => {
+    dispatch({ type: "CHOOSE_MAIN_PLAYER", players });
+  }, [players]);
 
-  // خيارات السؤال الحالية بعد الخلط
-  const [answerOptions, setAnswerOptions] = useState([]);
+  const updateQuestion = useCallback((id, field, value) => {
+    dispatch({ type: "UPDATE_QUESTION", id, field, value });
+  }, []);
 
-  // توقع اللاعب الأساسي: مين يعرفه أكثر؟
-  const [predictedPlayer, setPredictedPlayer] = useState(null);
+  const addQuestion = useCallback(() => {
+    dispatch({ type: "ADD_QUESTION" });
+  }, []);
 
+  const deleteQuestion = useCallback((id) => {
+    dispatch({ type: "DELETE_QUESTION", id });
+  }, []);
 
-  // اللاعبين الذين سيجيبون
-  // نستبعد اللاعب الأساسي
-  const answerPlayers = players.filter((player) => player !== mainPlayer);
-
-
-  /* =========================
-      اختيار اللاعب الأساسي
-  ========================= */
-
-  function chooseRandomPlayer() {
-    const randomIndex = Math.floor(Math.random() * players.length);
-
-    const selectedPlayer = players[randomIndex];
-
-    setMainPlayer(selectedPlayer);
-
-    setPhase("questions");
-  }
-
-
-  /* =========================
-      تعديل الأسئلة
-  ========================= */
-
-  function updateQuestion(index, field, value) {
-    const updatedQuestions = [...questions];
-
-    updatedQuestions[index][field] = value;
-
-    setQuestions(updatedQuestions);
-  }
-
-
-  /* =========================
-      إضافة سؤال
-  ========================= */
-
-  function addQuestion() {
-    if (questions.length >= 5) {
-      alert("الحد الأقصى 5 أسئلة");
-      return;
-    }
-
-    setQuestions([
-      ...questions,
-      {
-        question: "",
-        correctAnswer: "",
-        wrong1: "",
-        wrong2: ""
-      }
-    ]);
-  }
-
-
-  /* =========================
-      بدء مرحلة الإجابات
-  ========================= */
-
-  function saveQuestions() {
+  const saveQuestions = useCallback(() => {
     // تنظيف الأسئلة من الفراغات
-    const cleanQuestions = questions.map((item) => ({
-      question: item.question.trim(),
-      correctAnswer: item.correctAnswer.trim(),
-      wrong1: item.wrong1.trim(),
-      wrong2: item.wrong2.trim()
+    const clean = state.questions.map((q) => ({
+      ...q,
+      question: q.question.trim(),
+      correctAnswer: q.correctAnswer.trim(),
+      wrong1: q.wrong1.trim(),
+      wrong2: q.wrong2.trim(),
     }));
 
-    // أقل شيء 4 أسئلة
-    if (cleanQuestions.length < 4) {
-      alert("لازم تضيف 4 أسئلة على الأقل");
+    if (clean.length < 3) {
+      alert("لازم تضيف 3 أسئلة على الأقل");
       return;
     }
 
-    // التأكد أن كل الحقول معبأة
-    const hasEmptyField = cleanQuestions.some(
-      (item) =>
-        item.question === "" ||
-        item.correctAnswer === "" ||
-        item.wrong1 === "" ||
-        item.wrong2 === ""
+    const hasEmpty = clean.some(
+      (q) => !q.question || !q.correctAnswer || !q.wrong1 || !q.wrong2
     );
-
-    if (hasEmptyField) {
+    if (hasEmpty) {
       alert("عبّي كل الحقول");
       return;
     }
 
-    // حفظ الأسئلة المنظفة
-    setQuestions(cleanQuestions);
-
-    // تجهيز النقاط
-    const initialScores = {};
-
-    answerPlayers.forEach((player) => {
-      initialScores[player] = 0;
+    const hasDuplicate = clean.some((q) => {
+      const ans = [q.correctAnswer, q.wrong1, q.wrong2];
+      return new Set(ans).size !== ans.length;
     });
-
-    setScores(initialScores);
-
-    // نبدأ من أول لاعب وأول سؤال
-    setAnsweringIndex(0);
-    setQuestionIndex(0);
-
-    // نجهز خيارات أول سؤال بترتيب عشوائي
-    setAnswerOptions(createAnswerOptions(cleanQuestions[0]));
-
-    // نبدأ مرحلة الإجابات
-    setPhase("answering");
-
-    // نعرض شاشة تمرير الجوال
-    setShowPassScreen(true);
-  }
-
-
-  /* =========================
-      اختيار إجابة
-  ========================= */
-
-  function selectAnswer(answer) {
-    const currentQuestion = questions[questionIndex];
-
-    const currentPlayer = answerPlayers[answeringIndex];
-
-    const isCorrect = answer === currentQuestion.correctAnswer;
-
-    // إذا الإجابة صحيحة نزيد نقطة
-    if (isCorrect) {
-      setScores((previousScores) => ({
-        ...previousScores,
-        [currentPlayer]: previousScores[currentPlayer] + 1
-      }));
-    }
-
-    // هل يوجد لاعب بعده لنفس السؤال؟
-    const hasNextPlayer = answeringIndex < answerPlayers.length - 1;
-
-    if (hasNextPlayer) {
-      const nextIndex = answeringIndex + 1;
-
-      setAnsweringIndex(nextIndex);
-
-      // نعيد خلط نفس خيارات السؤال للاعب التالي
-      setAnswerOptions(createAnswerOptions(currentQuestion));
-
-      setShowPassScreen(true);
+    if (hasDuplicate) {
+      alert("تأكد أن إجابات كل سؤال مختلفة");
       return;
     }
 
-    // إذا انتهى كل اللاعبين من هذا السؤال
-    const hasNextQuestion = questionIndex < questions.length - 1;
+    dispatch({ type: "START_ANSWERING", questions: clean, answerPlayers });
+  }, [state.questions, answerPlayers]);
 
-    if (hasNextQuestion) {
-      const nextQuestionIndex = questionIndex + 1;
-      const nextQuestion = questions[nextQuestionIndex];
+  const selectAnswer = useCallback((answer) => {
+    const currentQ = state.questions[state.questionIndex];
+    const currentPlayer = answerPlayers[state.answeringIndex];
+    const isCorrect = answer === currentQ.correctAnswer;
 
-      setQuestionIndex(nextQuestionIndex);
+    const hasNextPlayer = state.answeringIndex < answerPlayers.length - 1;
+    const nextPlayerIndex = state.answeringIndex + 1;
 
-      // نرجع لأول لاعب
-      setAnsweringIndex(0);
+    const hasNextQuestion = state.questionIndex < state.questions.length - 1;
+    const nextQuestionIndex = state.questionIndex + 1;
+    const nextQuestion = hasNextQuestion ? state.questions[nextQuestionIndex] : null;
 
-      // نجهز خيارات السؤال الجديد بترتيب عشوائي
-      setAnswerOptions(createAnswerOptions(nextQuestion));
+    dispatch({
+      type: "SELECT_ANSWER",
+      isCorrect,
+      currentPlayer,
+      hasNextPlayer,
+      nextPlayerIndex,
+      hasNextQuestion,
+      nextQuestionIndex,
+      nextQuestion,
+    });
+  }, [state, answerPlayers]);
 
-      setShowPassScreen(true);
-      return;
-    }
+  const choosePrediction = useCallback((player) => {
+    dispatch({ type: "PREDICT", player });
+  }, []);
 
-    // إذا انتهت كل الأسئلة ننتقل لمرحلة توقع اللاعب الأساسي
-    setPhase("prediction");
-    setShowPassScreen(true);
-  }
+  const startAnotherRound = useCallback(() => {
+    dispatch({ type: "NEW_ROUND", players });
+  }, [players]);
 
+  const hidePassScreen = useCallback(() => {
+    dispatch({ type: "HIDE_PASS_SCREEN" });
+  }, []);
 
-  /* =========================
-      توقع اللاعب الأساسي
-  ========================= */
-
-  function choosePrediction(player) {
-    setPredictedPlayer(player);
-    setPhase("results");
-  }
-
-
-  /* =========================
-      لا يوجد لاعبين
-  ========================= */
-
-  if (players.length === 0) {
+  // ============ التحقق من عدد اللاعبين ============
+  if (players.length < 2) {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <h2>ما فيه لاعبين محفوظين</h2>
-
+          <h2>يلزم على الأقل لاعبَين اثنين للعب</h2>
           <button style={mainButton} onClick={() => navigate("/games")}>
             رجوع للألعاب
           </button>
@@ -292,21 +291,14 @@ export default function KnowMe() {
     );
   }
 
+  // ============ عرض المرحلة ============
 
-  /* =========================
-      شاشة اختيار اللاعب الأساسي
-  ========================= */
-
-  if (phase === "choose") {
+  if (state.phase === "choose") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>مين يعرفني أكثر؟ 👀</h1>
-
-          <p style={textStyle}>
-            التطبيق بيختار شخص، وهو يكتب أسئلة عن نفسه.
-          </p>
-
+          <p style={textStyle}>التطبيق بيختار شخص، وهو يكتب أسئلة عن نفسه.</p>
           <button style={mainButton} onClick={chooseRandomPlayer}>
             اختيار لاعب عشوائي
           </button>
@@ -315,62 +307,56 @@ export default function KnowMe() {
     );
   }
 
-
-  /* =========================
-      شاشة كتابة الأسئلة
-  ========================= */
-
-  if (phase === "questions") {
+  if (state.phase === "questions") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2 style={titleStyle}>مرروا الجوال إلى</h2>
-
-          <h1 style={{ color: "#6C4CF1" }}>{mainPlayer}</h1>
-
+          <h1 style={{ color: "#6C4CF1" }}>{state.mainPlayer}</h1>
           <p style={textStyle}>
-            اكتب 4 أو 5 أسئلة عن نفسك، ومع كل سؤال إجابة صحيحة وخيارين غلط.
+            اكتب من 3 إلى 5 أسئلة عن نفسك
+            <br />
+            ومع كل سؤال إجابة صحيحة واختيارين خاطئين
           </p>
 
-          {questions.map((item, index) => (
-            <div key={index} style={questionCardStyle}>
+          {state.questions.map((q, index) => (
+            <div key={q.id} style={questionCardStyle}>
+              <div style={questionHeaderStyle}>
+                <strong>السؤال {index + 1}</strong>
+                <button
+                  onClick={() => deleteQuestion(q.id)}
+                  style={deleteButtonStyle}
+                >
+                  حذف السؤال
+                </button>
+              </div>
+
               <input
                 type="text"
                 placeholder="السؤال"
-                value={item.question}
-                onChange={(e) =>
-                  updateQuestion(index, "question", e.target.value)
-                }
+                value={q.question}
+                onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
                 style={inputStyle}
               />
-
               <input
                 type="text"
                 placeholder="الإجابة الصحيحة"
-                value={item.correctAnswer}
-                onChange={(e) =>
-                  updateQuestion(index, "correctAnswer", e.target.value)
-                }
+                value={q.correctAnswer}
+                onChange={(e) => updateQuestion(q.id, "correctAnswer", e.target.value)}
                 style={inputStyle}
               />
-
               <input
                 type="text"
-                placeholder="إجابة غلط 1"
-                value={item.wrong1}
-                onChange={(e) =>
-                  updateQuestion(index, "wrong1", e.target.value)
-                }
+                placeholder="إجابة خطأ 1"
+                value={q.wrong1}
+                onChange={(e) => updateQuestion(q.id, "wrong1", e.target.value)}
                 style={inputStyle}
               />
-
               <input
                 type="text"
-                placeholder="إجابة غلط 2"
-                value={item.wrong2}
-                onChange={(e) =>
-                  updateQuestion(index, "wrong2", e.target.value)
-                }
+                placeholder="إجابة خطأ 2"
+                value={q.wrong2}
+                onChange={(e) => updateQuestion(q.id, "wrong2", e.target.value)}
                 style={inputStyle}
               />
             </div>
@@ -379,7 +365,6 @@ export default function KnowMe() {
           <button style={secondaryButton} onClick={addQuestion}>
             + إضافة سؤال
           </button>
-
           <button style={mainButton} onClick={saveQuestions}>
             بدء اللعبة
           </button>
@@ -388,41 +373,33 @@ export default function KnowMe() {
     );
   }
 
-
-  /* =========================
-      شاشة إجابة اللاعبين
-  ========================= */
-
-  if (phase === "answering") {
-    const currentQuestion = questions[questionIndex];
-
-    const currentPlayer = answerPlayers[answeringIndex];
+  if (state.phase === "answering") {
+    const currentQ = state.questions[state.questionIndex];
+    const currentPlayer = answerPlayers[state.answeringIndex];
 
     return (
       <div style={pageStyle}>
-        {showPassScreen && (
+        {state.showPassScreen && (
           <PassOverlay
             playerName={currentPlayer}
             message="مرروا الجوال إلى"
             buttonText="نعم هذا أنا"
-            onConfirm={() => setShowPassScreen(false)}
+            onConfirm={hidePassScreen}
           />
         )}
 
         <div style={cardStyle}>
           <p style={textStyle}>
-            السؤال {questionIndex + 1} من {questions.length}
+            السؤال {state.questionIndex + 1} من {state.questions.length}
           </p>
+          <p style={textStyle}>
+            الدور على: <strong>{currentPlayer}</strong>
+          </p>
+          <h2 style={titleStyle}>{currentQ.question}</h2>
 
-          <h2 style={titleStyle}>{currentQuestion.question}</h2>
-
-          {answerOptions.map((option) => (
-            <button
-              key={option}
-              style={mainButton}
-              onClick={() => selectAnswer(option)}
-            >
-              {option}
+          {state.answerOptions.map((opt) => (
+            <button key={opt} style={mainButton} onClick={() => selectAnswer(opt)}>
+              {opt}
             </button>
           ))}
         </div>
@@ -430,37 +407,26 @@ export default function KnowMe() {
     );
   }
 
-
-  /* =========================
-      شاشة توقع اللاعب الأساسي
-  ========================= */
-
-  if (phase === "prediction") {
+  if (state.phase === "prediction") {
     return (
       <div style={pageStyle}>
-        {showPassScreen && (
+        {state.showPassScreen && (
           <PassOverlay
-            playerName={mainPlayer}
+            playerName={state.mainPlayer}
             message="مرروا الجوال إلى"
             buttonText="جاهز أشوف"
-            onConfirm={() => setShowPassScreen(false)}
+            onConfirm={hidePassScreen}
           />
         )}
 
         <div style={cardStyle}>
           <h2 style={titleStyle}>مين تتوقع يعرفك أكثر؟ 👀</h2>
-
           <p style={textStyle}>
             اختار الشخص اللي تتوقع أنه جاوب أكثر إجابات صحيحة عنك.
           </p>
-
-          {answerPlayers.map((player) => (
-            <button
-              key={player}
-              style={mainButton}
-              onClick={() => choosePrediction(player)}
-            >
-              {player}
+          {answerPlayers.map((p) => (
+            <button key={p} style={mainButton} onClick={() => choosePrediction(p)}>
+              {p}
             </button>
           ))}
         </div>
@@ -468,74 +434,66 @@ export default function KnowMe() {
     );
   }
 
+  if (state.phase === "results") {
+    const sortedScores = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
+    const highest = sortedScores[0]?.[1] || 0;
+    const winners = sortedScores.filter(([, s]) => s === highest).map(([p]) => p);
+    const correct = winners.includes(state.predictedPlayer);
 
-  /* =========================
-      شاشة النتائج
-  ========================= */
-
-  if (phase === "results") {
-    const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-
-    const highestScore = Math.max(...sortedScores.map(([, score]) => score));
-
-    const winners = sortedScores
-      .filter(([, score]) => score === highestScore)
-      .map(([player]) => player);
-
-    const predictionIsCorrect = winners.includes(predictedPlayer);
+    // تصحيح: إزالة القيمة الابتدائية الفارغة حتى لا تظهر غير مستخدمة
+    let message; // سيتم تعيينه في جميع الحالات أدناه
+    if (correct && winners.length === 1) {
+      message = "توقعك صحيح، والله يديم العلاقة الجميلة هذي 💜";
+    } else if (correct && winners.length > 1) {
+      message = "نقدر نقول إنك خمنت صح 👀 بس واضح إن فيه أكثر من شخص يعرفك كويس! المرة الجاية اكتب أسئلة أدق 😄";
+    } else if (!correct && winners.length === 1) {
+      message = `مفاجأة! الشخص اللي يعرفك أكثر هو: ${winners[0]} 👀 راجع علاقتك معاه… تراه يستاهل أكثر 💜`;
+    } else {
+      message = `مفاجأة! فيه أكثر من شخص يعرفك كويس: ${winners.join(" و ")} 👀 مدري أقولك راجع أسئلتك ولا راجع علاقاتك مع الناس 😄`;
+    }
 
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>النتائج 🏆</h1>
-
           <p style={textStyle}>
-            توقع {mainPlayer}: {predictedPlayer}
+            توقع {state.mainPlayer}: {state.predictedPlayer}
           </p>
+          <p style={resultMessageStyle}>{message}</p>
 
-          {predictionIsCorrect ? (
-            <p style={{ ...textStyle, color: "#2f9e44", fontWeight: 700 }}>
-              توقع صحيح 👀✨
-            </p>
-          ) : (
-            <p style={{ ...textStyle, color: "#d6336c", fontWeight: 700 }}>
-              مفاجأة! أكثر شخص يعرفك: {winners.join(" و ")}
-            </p>
-          )}
-
-          {sortedScores.map(([player, score]) => (
-            <div key={player} style={resultItemStyle}>
-              {winners.includes(player) && highestScore > 0 ? "👑 " : ""}
-              {player} — {score} نقطة
+          {sortedScores.map(([p, s]) => (
+            <div key={p} style={resultItemStyle}>
+              {winners.includes(p) && highest > 0 ? "👑 " : ""}
+              {p} — {s} نقطة
             </div>
           ))}
 
-          <button style={mainButton} onClick={() => navigate("/games")}>
+          <button style={mainButton} onClick={startAnotherRound}>
+            جولة أخرى
+          </button>
+          <button style={secondaryButton} onClick={() => navigate("/games")}>
             رجوع للألعاب
           </button>
         </div>
       </div>
     );
   }
+
+  // افتراضي (لا ينبغي الوصول)
+  return null;
 }
 
-
-/* =========================
-    مكون شاشة تمرير الجوال
-========================= */
+// =========================
+//     شاشة تمرير الجوال
+// =========================
 
 function PassOverlay({ playerName, message, buttonText, onConfirm }) {
   return (
     <div style={overlayStyle}>
       <div style={overlayCardStyle}>
         <h2 style={titleStyle}>{message}</h2>
-
         <h1>{playerName}</h1>
-
-        <p style={textStyle}>
-          لا تفتح الشاشة إلا لما يكون الجوال معه 👀
-        </p>
-
+        <p style={textStyle}>لا تفتح الشاشة إلا لما يكون الجوال معه 👀</p>
         <button style={mainButton} onClick={onConfirm}>
           {buttonText}
         </button>
@@ -544,10 +502,9 @@ function PassOverlay({ playerName, message, buttonText, onConfirm }) {
   );
 }
 
-
-/* =========================
-    التنسيقات
-========================= */
+// =========================
+//       التنسيقات
+// =========================
 
 const pageStyle = {
   minHeight: "100dvh",
@@ -557,7 +514,8 @@ const pageStyle = {
   alignItems: "center",
   padding: "24px",
   boxSizing: "border-box",
-  fontFamily: "Cairo, sans-serif"
+  fontFamily: "Cairo, sans-serif",
+  direction: "rtl",
 };
 
 const cardStyle = {
@@ -567,17 +525,17 @@ const cardStyle = {
   padding: "28px",
   borderRadius: "24px",
   textAlign: "center",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
+  boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
 };
 
 const titleStyle = {
   color: "#6C4CF1",
-  marginTop: 0
+  marginTop: 0,
 };
 
 const textStyle = {
   color: "#777",
-  lineHeight: 1.8
+  lineHeight: 1.8,
 };
 
 const mainButton = {
@@ -591,7 +549,7 @@ const mainButton = {
   fontSize: "17px",
   fontWeight: 700,
   cursor: "pointer",
-  fontFamily: "Cairo, sans-serif"
+  fontFamily: "Cairo, sans-serif",
 };
 
 const secondaryButton = {
@@ -605,14 +563,34 @@ const secondaryButton = {
   fontSize: "17px",
   fontWeight: 700,
   cursor: "pointer",
-  fontFamily: "Cairo, sans-serif"
+  fontFamily: "Cairo, sans-serif",
 };
 
 const questionCardStyle = {
   background: "#f7f5ff",
   padding: "16px",
   borderRadius: "18px",
-  marginTop: "18px"
+  marginTop: "18px",
+  textAlign: "right",
+};
+
+const questionHeaderStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  color: "#6C4CF1",
+  fontFamily: "Cairo, sans-serif",
+};
+
+const deleteButtonStyle = {
+  padding: "6px 10px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#ffeff3",
+  color: "#d6336c",
+  cursor: "pointer",
+  fontFamily: "Cairo, sans-serif",
+  fontWeight: 700,
 };
 
 const inputStyle = {
@@ -623,7 +601,18 @@ const inputStyle = {
   border: "1px solid #ddd",
   fontSize: "16px",
   fontFamily: "Cairo, sans-serif",
-  boxSizing: "border-box"
+  boxSizing: "border-box",
+  textAlign: "right",
+};
+
+const resultMessageStyle = {
+  background: "#f7f5ff",
+  color: "#4b3ca7",
+  padding: "14px",
+  borderRadius: "14px",
+  lineHeight: 1.8,
+  fontWeight: 700,
+  marginTop: "14px",
 };
 
 const resultItemStyle = {
@@ -631,7 +620,7 @@ const resultItemStyle = {
   padding: "14px",
   borderRadius: "14px",
   marginTop: "10px",
-  fontWeight: 700
+  fontWeight: 700,
 };
 
 const overlayStyle = {
@@ -643,7 +632,8 @@ const overlayStyle = {
   justifyContent: "center",
   alignItems: "center",
   padding: "24px",
-  zIndex: 100
+  zIndex: 100,
+  direction: "rtl",
 };
 
 const overlayCardStyle = {
@@ -652,5 +642,5 @@ const overlayCardStyle = {
   maxWidth: "420px",
   padding: "28px",
   borderRadius: "24px",
-  textAlign: "center"
+  textAlign: "center",
 };

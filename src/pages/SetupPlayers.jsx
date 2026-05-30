@@ -5,17 +5,14 @@ import { useState } from "react";
 // ونستورد useParams لمعرفة اللعبة الحالية من الرابط
 import { useNavigate, useParams } from "react-router-dom";
 
-
 // صفحة إعداد اللاعبين
 export default function SetupPlayers() {
-
   // نقرأ معرف اللعبة من الرابط
   // مثال: /play/who-said/setup
   const { gameId } = useParams();
 
   // نجهز أداة التنقل
   const navigate = useNavigate();
-
 
   // أسماء الألعاب
   const gameNames = {
@@ -24,16 +21,13 @@ export default function SetupPlayers() {
     "know-me": "من يعرفني أكثر؟ 👀"
   };
 
-
   // اللاعبين الحاليين في هذه الجولة
   // نبدأ بحقل واحد فاضي
   const [players, setPlayers] = useState([""]);
 
-
   // الجمعات السابقة
   // نقرأها من localStorage عند فتح الصفحة
   const [savedGroups, setSavedGroups] = useState(() => {
-
     // نحاول نقرأ الجمعات المحفوظة
     const data = localStorage.getItem("saved-groups");
 
@@ -42,10 +36,12 @@ export default function SetupPlayers() {
     return data ? JSON.parse(data) : [];
   });
 
+  // رقم الجمعة التي يتم حذفها حاليًا
+  // نستخدمه لتطبيق حركة الاختفاء على البطاقة قبل حذفها
+  const [deletingGroupId, setDeletingGroupId] = useState(null);
 
   // تحديث اسم لاعب معيّن
   function updatePlayer(index, value) {
-
     // ننسخ قائمة اللاعبين الحالية
     const newPlayers = [...players];
 
@@ -56,18 +52,14 @@ export default function SetupPlayers() {
     setPlayers(newPlayers);
   }
 
-
   // إضافة لاعب جديد
   function addPlayer() {
-
     // نضيف حقل فاضي جديد
     setPlayers([...players, ""]);
   }
 
-
   // حذف لاعب من القائمة الحالية
   function removePlayer(index) {
-
     // نحذف اللاعب حسب ترتيبه
     const newPlayers = players.filter((_, i) => i !== index);
 
@@ -75,53 +67,61 @@ export default function SetupPlayers() {
     setPlayers(newPlayers);
   }
 
-
   // اختيار جمعة محفوظة
   // سميناها selectSavedGroup بدل useSavedGroup
   // لأن React يعتبر أي دالة تبدأ بـ use كأنها Hook
   function selectSavedGroup(group) {
-
     // ننسخ لاعبين الجمعة المختارة إلى اللاعبين الحاليين
     setPlayers(group.players);
 
-     // نطلع المستخدم لأعلى الصفحة عشان يشوف الأسماء
+    // نطلع المستخدم لأعلى الصفحة عشان يشوف الأسماء
     window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+      top: 0,
+      behavior: "smooth"
+    });
   }
 
-
-  // حذف جمعة كاملة من الجمعات السابقة
+  // حذف جمعة كاملة من الجمعات السابقة مع حركة اختفاء
   function deleteGroup(groupId) {
+    // نحدد البطاقة التي سيتم حذفها
+    // هذا يجعل البطاقة تبدأ حركة الاختفاء
+    setDeletingGroupId(groupId);
 
-    // نحذف الجمعة التي لها نفس id
-    const updatedGroups = savedGroups.filter((group) => group.id !== groupId);
+    // ننتظر 300ms حتى تنتهي الحركة
+    // ثم نحذف الجمعة فعليًا من القائمة
+    setTimeout(() => {
+      // نحذف الجمعة التي لها نفس id
+      const updatedGroups = savedGroups.filter(
+        (group) => group.id !== groupId
+      );
 
-    // نحدث الواجهة
-    setSavedGroups(updatedGroups);
+      // نحدث الواجهة
+      setSavedGroups(updatedGroups);
 
-    // نحفظ التحديث في localStorage
-    localStorage.setItem("saved-groups", JSON.stringify(updatedGroups));
+      // نحفظ التحديث في localStorage
+      localStorage.setItem(
+        "saved-groups",
+        JSON.stringify(updatedGroups)
+      );
+
+      // نرجع الحالة للوضع الطبيعي
+      setDeletingGroupId(null);
+    }, 300);
   }
-
 
   // بدء الجولة
   function startGame() {
-
     // ننظف الأسماء:
     // نحذف المسافات ونستبعد الحقول الفاضية
     const cleanPlayers = players
       .map((name) => name.trim())
       .filter((name) => name !== "");
 
-
-    // لازم يكون فيه 3 على الأقل
+    // لازم يكون فيه 3 لاعبين على الأقل
     if (cleanPlayers.length < 3) {
       alert("أضف 3 لاعبين على الأقل");
       return;
     }
-
 
     // ننشئ جمعة جديدة بتاريخ اليوم
     const newGroup = {
@@ -130,18 +130,14 @@ export default function SetupPlayers() {
       players: cleanPlayers
     };
 
-
     // نضيف الجمعة الجديدة في أول القائمة
     const updatedGroups = [newGroup, ...savedGroups];
-
 
     // نحدث الجمعات في الواجهة
     setSavedGroups(updatedGroups);
 
-
     // نحفظ الجمعات في localStorage
     localStorage.setItem("saved-groups", JSON.stringify(updatedGroups));
-
 
     // نحفظ اللاعبين الحاليين عشان صفحة اللعبة تستخدمهم
     localStorage.setItem(
@@ -149,48 +145,53 @@ export default function SetupPlayers() {
       JSON.stringify(cleanPlayers)
     );
 
-
     // ننتقل لصفحة اللعبة
     navigate(`/play/${gameId}`);
   }
 
-
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#f7f5ff",
-      padding: "24px",
-      boxSizing: "border-box",
-      fontFamily: "Cairo, sans-serif"
-    }}>
-
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f7f5ff",
+        padding: "24px",
+        boxSizing: "border-box",
+        fontFamily: "Cairo, sans-serif"
+      }}
+    >
       {/* عنوان اللعبة */}
-      <h1 style={{
-        color: "#6C4CF1",
-        textAlign: "center",
-        paddingBottom: "12px",
-        fontSize: "50px",
-        
-      }}>
+      <h1
+        style={{
+          color: "#6C4CF1",
+          textAlign: "center",
+          paddingBottom: "12px",
+          fontSize: "50px"
+        }}
+      >
         {gameNames[gameId]}
       </h1>
 
-
       {/* كرت إعداد اللاعبين */}
-      <div style={{
-        background: "white",
-        maxWidth: "500px",
-        margin: "30px auto",
-        padding: "24px",
-        borderRadius: "24px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
-      }}>
-
+      <div
+        style={{
+          background: "white",
+          maxWidth: "500px",
+          margin: "30px auto",
+          padding: "24px",
+          borderRadius: "24px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
+        }}
+      >
         {/* عنوان الكرت */}
-        <h2 style={{ marginTop: 0 ,fontFamily: "Cairo, sans-serif"}}>
+        <h2
+          style={{
+            marginTop: 0,
+            fontFamily: "Cairo, sans-serif",
+            fontWeight: "700"
+          }}
+        >
           من بيلعب معك؟ 👥
         </h2>
-
 
         {/* حقول اللاعبين */}
         {players.map((player, index) => (
@@ -202,7 +203,6 @@ export default function SetupPlayers() {
               marginBottom: "10px"
             }}
           >
-
             {/* حقل اسم اللاعب */}
             <input
               type="text"
@@ -218,7 +218,6 @@ export default function SetupPlayers() {
                 fontFamily: "Cairo, sans-serif"
               }}
             />
-
 
             {/* زر حذف اللاعب */}
             <button
@@ -238,7 +237,6 @@ export default function SetupPlayers() {
           </div>
         ))}
 
-
         {/* زر إضافة لاعب */}
         <button
           onClick={addPlayer}
@@ -256,7 +254,6 @@ export default function SetupPlayers() {
         >
           + إضافة لاعب
         </button>
-
 
         {/* زر بدء الجولة */}
         <button
@@ -278,11 +275,9 @@ export default function SetupPlayers() {
           ابدأ الجولة 🎮
         </button>
 
-
         {/* الجمعات السابقة تظهر فقط إذا فيه جمعات محفوظة */}
         {savedGroups.length > 0 && (
           <div style={{ marginTop: "28px" }}>
-
             <h3>الجمعات السابقة</h3>
 
             {savedGroups.map((group) => (
@@ -292,58 +287,94 @@ export default function SetupPlayers() {
                   background: "#f7f5ff",
                   padding: "14px",
                   borderRadius: "16px",
-                  marginBottom: "12px"
+                  marginBottom: "12px",
+
+                  // حركة ناعمة عند الحذف
+                  transition: "all 0.3s ease",
+
+                  // إذا هذه هي الجمعة المحذوفة، نجعلها تختفي
+                  opacity: deletingGroupId === group.id ? 0 : 1,
+
+                  // نحرك البطاقة قليلًا لليمين أثناء الاختفاء
+                  transform:
+                    deletingGroupId === group.id
+                      ? "translateX(40px)"
+                      : "translateX(0)"
                 }}
               >
-
                 {/* تاريخ الجمعة */}
                 <strong>جمعة {group.date}</strong>
-
 
                 {/* أسماء اللاعبين في الجمعة */}
                 <p style={{ color: "#777", margin: "8px 0" }}>
                   {group.players.join(" - ")}
                 </p>
 
-
-                {/* زر استخدام الجمعة */}
-                <button
-                  onClick={() => selectSavedGroup(group)}
+                {/* حاوية الأزرار عشان نعمل مسافة بينهم */}
+                <div
                   style={{
-                    marginLeft: "8px",
-                    padding: "8px 14px",
-                    border: "none",
-                    borderRadius: "10px",
-                    background: "#6C4CF1",
-                    color: "white",
-                    cursor: "pointer",
-                    fontFamily: "Cairo, sans-serif"
+                    display: "flex",
+                    gap: "10px",
+                    justifyContent: "center",
+                    marginTop: "10px"
                   }}
                 >
-                  استخدام
-                </button>
+                  {/* زر استخدام الجمعة */}
+                  <button
+                    onClick={() => selectSavedGroup(group)}
+                    style={{
+                      padding: "8px 14px",
+                      border: "none",
+                      borderRadius: "10px",
+                      background: "#6C4CF1",
+                      color: "white",
+                      cursor: "pointer",
+                      fontFamily: "Cairo, sans-serif"
+                    }}
+                  >
+                    استخدام
+                  </button>
 
-
-                {/* زر حذف الجمعة */}
-                <button
-                  onClick={() => deleteGroup(group.id)}
-                  style={{
-                    padding: "8px 14px",
-                    border: "none",
-                    borderRadius: "10px",
-                    background: "#ffeff3",
-                    color: "#d6336c",
-                    cursor: "pointer",
-                    fontFamily: "Cairo, sans-serif"
-                  }}
-                >
-                  حذف الجمعة
-                </button>
+                  {/* زر حذف الجمعة */}
+                  <button
+                    onClick={() => deleteGroup(group.id)}
+                    style={{
+                      padding: "8px 14px",
+                      border: "none",
+                      borderRadius: "10px",
+                      background: "#ffeff3",
+                      color: "#d6336c",
+                      cursor: "pointer",
+                      fontFamily: "Cairo, sans-serif"
+                    }}
+                  >
+                    حذف الجمعة
+                  </button>
+                </div>
               </div>
+
+              
             ))}
           </div>
+
         )}
+                <button style={backButtonStyle} onClick={() => navigate("/games")}>
+          رجوع للألعاب
+        </button>
       </div>
     </div>
   );
 }
+const backButtonStyle = {
+  width: "100%",
+  minHeight: "58px",
+  marginTop: "14px",
+  border: "none",
+  borderRadius: "14px",
+  background: "#eeeafc",
+  color: "#6C4CF1",
+  fontSize: "16px",
+  fontWeight: 800,
+  cursor: "pointer",
+  fontFamily: "Cairo, sans-serif"
+};

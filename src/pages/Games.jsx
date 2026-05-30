@@ -1,254 +1,319 @@
-// نستورد أداة التنقل بين الصفحات
+// استيراد أداة التنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
 
 
-
-// هذا مكون صفحة الألعاب
+// مكون صفحة الألعاب
 export default function Games() {
 
-  // يسمح لنا بالانتقال بين الصفحات
+  // أداة التنقل
   const navigate = useNavigate();
 
 
-
-  // مصفوفة الألعاب
-  // كل لعبة تحتوي على:
-  // title = اسم اللعبة
-  // id = معرف اللعبة
-  // description = وصف بسيط تحت الاسم
+  // قائمة الألعاب
   const games = [
 
     {
-      title: "من قالها؟ 😂",
+      title: "من قالها؟",
+      emoji: "😂",
+      color: "#F6F0DC",
       id: "who-said",
-      description: "😂  خمّن ✅ تكسب نقطة، خمّن ❌ يربح اللي قالها"
+      description: "خمّن ✅ تكسب نقطة,خمّن ❌ يربح اللي قالها"
     },
 
     {
-      title: "الكلمة الممنوعة 🤫",
+      title: "الكلمة الممنوعة",
+      emoji: "🤫",
+      color: "#E8F1FF",
       id: "forbidden-word",
-      description: "استدرج صاحبك يقول الكلمة 🎤"
+      description: "استدرج صاحبك يقول الكلمة"
     },
 
     {
-      title: "من يعرفني أكثر؟ 👀",
+      title: "من يعرفني أكثر؟",
+      emoji: "👀",
+      color: "#F1E7FF",
       id: "know-me",
-      description: "اختبر مين يعرفك فعلًا 💜"
+      description: "اختبر مين يعرفك فعلًا"
     }
 
   ];
 
 
-
   return (
 
-    // الحاوية الرئيسية للصفحة
-    <div style={{
+    // الحاوية الرئيسية
+    <div
+      style={{
 
-      // يجعل الصفحة بطول الشاشة
-      minHeight: "100dvh",
+        // ارتفاع الشاشة بالكامل
+        minHeight: "100dvh",
 
-      // لون الخلفية
-      background: "#f7f5ff",
+        // لون الخلفية
+        background: "#F7F5FF",
 
-      // مسافة داخلية
-      padding: "24px",
+        // مسافة داخلية
+        padding: "24px",
 
-      // الخط المستخدم
-      fontFamily: "Cairo, sans-serif"
-    }}>
+        // الخط المستخدم
+        fontFamily: "Cairo, sans-serif"
+      }}
+    >
 
+      {/* رأس الصفحة */}
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: "30px",
+          marginBottom: "40px"
+        }}
+      >
 
+        {/* اسم التطبيق */}
+        <h1
+          style={{
+            color: "#6C4CF1",
+            fontSize: "58px",
+            fontWeight: "900",
+            margin: 0,
+            fontFamily: "Cairo, sans-serif",
+          }}
+        >
+          ونسنّا
+        </h1>
 
-      {/* عنوان الصفحة */}
-      <h1 style={{
+        {/* وصف التطبيق */}
+        <p
+          style={{
+            marginTop: "20px",
+            color: "#888",
+            fontSize: "20px",
+            fontWeight: "700",
+            marginLeft: "100px",
+          }}
+        >
+          ألعاب تجمعكم🎮
+        </p>
 
-        // توسيط العنوان
-        textAlign: "center",
+        {/* عنوان القسم */}
+        <h2
+          style={{
+            marginTop: "35px",
+            color: "rgba(95, 146, 182, 0.8)",
+            fontSize: "30px",
+            fontWeight: "800",
+            fontFamily: "Cairo, sans-serif",
+          }}
+        >
+        اختر لعبة... وخلّينا نلعب
+        </h2>
 
-        // لون العنوان
-        color: "#6C4CF1",
-
-        // مسافة من الأعلى
-        marginTop: "40px",
-
-        // مسافة من الأسفل
-        marginBottom: "40px",
-
-        // حجم الخط
-        fontSize: "48px",
-
-        // سماكة الخط
-        fontWeight: "800",
-
-        // خط Cairo
-        fontFamily: "Cairo, sans-serif",
-
-      }}>
-
-        اختر اللعبة 🎮
-
-      </h1>
-
-
-
-
-      {/* حاوية كروت الألعاب */}
-      <div style={{
-
-        // ترتيب عمودي
-        display: "flex",
-
-        flexDirection: "column",
-
-        // مسافة بين الكروت
-        gap: "20px",
-
-        // أقصى عرض للحاوية
-        maxWidth: "500px",
-
-        // توسيط الحاوية
-        margin: "0 auto"
-      }}>
-
+      </div>
 
 
-        {/* نلف على جميع الألعاب */}
+
+      {/* قائمة الألعاب */}
+      <div
+        style={{
+
+          display: "flex",
+          flexDirection: "column",
+
+          gap: "18px",
+
+          maxWidth: "550px",
+
+          margin: "0 auto"
+        }}
+      >
+
+        {/* إنشاء بطاقة لكل لعبة */}
         {games.map((game) => (
 
-
-
-          // كرت اللعبة
           <div
-
-            // مفتاح فريد لكل عنصر
             key={game.id}
 
-
-
-            // عند الضغط على اللعبة
+            // الانتقال للعبة عند الضغط
             onClick={() => {
-             /*
-              // نقرأ حالة الاشتراك من المتصفح
-              const isSubscribed =
-                localStorage.getItem(
-                  `subscribed-${game.id}`
-                );
-
-              // إذا اللعبة مفعلة
-              if (isSubscribed === "true") {*/
-
-                // يروح مباشرة لصفحة الإعداد
-                navigate(`/play/${game.id}/setup`);
-                /*
-              }
-
-              // إذا غير مفعلة
-              else {
-
-                // يروح لصفحة الاشتراك
-                navigate(`/locked/${game.id}`);
-              }*/
+              navigate(`/play/${game.id}/setup`);
             }}
-
-
 
             style={{
 
-              // لون الكرت
-              background: "white",
+              // لون البطاقة
+              background: game.color,
 
-              // مسافة داخلية
-              padding: "28px",
+              // حواف دائرية
+              borderRadius: "28px",
 
-              // تدوير الحواف
-              borderRadius: "24px",
+              // مسافات داخلية
+              padding: "20px",
 
               // شكل المؤشر
               cursor: "pointer",
 
-              // الظل
-              boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+              // توزيع العناصر أفقياً
+              display: "flex",
 
-              // حركة ناعمة
-              transition: "0.2s",
+              alignItems: "center",
 
-              // محاذاة النص
-              textAlign: "center"
+              gap: "18px",
+
+              // ارتفاع البطاقة
+              minHeight: "120px",
+
+              // ظل خفيف
+              boxShadow: "0 8px 20px rgba(190, 182, 182, 0.78)"
             }}
           >
 
+            {/* مربع الإيموجي */}
+            <div
+              style={{
+                width: "80px",
+                height: "80px",
+
+                background: "rgba(142, 142, 235, 0.75)",
+
+                borderRadius: "22px",
+
+                display: "flex",
+
+                alignItems: "center",
+
+                justifyContent: "center",
+
+                fontSize: "42px",
+
+                flexShrink: 0
+              }}
+            >
+              {game.emoji}
+            </div>
 
 
-            {/* اسم اللعبة */}
-            <h2 style={{
 
-              margin: 0,
+            {/* معلومات اللعبة */}
+            <div
+              style={{
+                textAlign: "right",
+                flex: 1
+              }}
+            >
 
-              color: "#444",
+              {/* اسم اللعبة */}
+              <div
+                style={{
+                  fontSize: "30px",
+                  fontWeight: "800",
+                  color: "#444"
+                }}
+              >
+                {game.title}
+              </div>
 
-              fontSize: "36px",
+              {/* وصف اللعبة */}
+              <div
+                style={{
+                  fontSize: "16px",
+                  color: "#777",
+                  marginTop: "6px"
+                }}
+              >
+                {game.description}
+              </div>
 
-              fontWeight: "700"
-
-            }}>
-
-              {game.title}
-
-            </h2>
-
-
-
-
-            {/* وصف اللعبة */}
-            <p style={{
-
-              // مسافة من الأعلى
-              marginTop: "12px",
-
-              // لون الوصف
-              color: "#888",
-
-              // حجم الخط
-              fontSize: "16px",
-
-              // سماكة متوسطة
-              fontWeight: "600",
-
-              // ارتفاع السطر
-              lineHeight: "1.7"
-
-            }}>
-
-              {game.description}
-
-            </p>
+            </div>
 
           </div>
 
         ))}
-        <button style={supportButtonStyle} onClick={() => navigate("/support")}>
-          ادعم ونسنّا ❤️
-          
-        </button>
+
+
+
+        {/* بطاقة الدعم */}
+        <div
+          onClick={() => navigate("/support")}
+
+          style={{
+            background: "#FFE8F1",
+
+            borderRadius: "28px",
+
+            padding: "20px",
+
+            cursor: "pointer",
+
+            display: "flex",
+
+            alignItems: "center",
+
+            gap: "18px",
+
+            minHeight: "120px",
+
+            boxShadow: "0 8px 20px rgba(0,0,0,0.06)"
+          }}
+        >
+
+          {/* أيقونة الدعم */}
+          <div
+            style={{
+              width: "80px",
+              height: "80px",
+
+              background: "rgba(255,255,255,.75)",
+
+              borderRadius: "22px",
+
+              display: "flex",
+
+              alignItems: "center",
+
+              justifyContent: "center",
+
+              fontSize: "42px",
+
+              flexShrink: 0
+            }}
+          >
+            ❤️
+          </div>
+
+
+          {/* نص الدعم */}
+          <div
+            style={{
+              textAlign: "right",
+              flex: 1
+            }}
+          >
+
+            <div
+              style={{
+                fontSize: "30px",
+                fontWeight: "800",
+                color: "#444"
+              }}
+            >
+              ادعم ونسنّا
+            </div>
+
+            <div
+              style={{
+                fontSize: "16px",
+                color: "#777",
+                marginTop: "6px"
+              }}
+            >
+              بدعمك نقدر نطور أكثر 🚀
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
     </div>
   );
 }
-
-const supportButtonStyle = {
-  width: "100%",
-  minHeight: "58px",
-  padding: "10px",
-  background: "#fff0f6",
-  color: "#d6336c",
-  border: "2px solid #ffd6e7",
-  borderRadius: "14px",
-  fontSize: "16px",
-  fontWeight: 800,
-  cursor: "pointer",
-  fontFamily: "Cairo, sans-serif",
-  marginBottom: "14px"
-};

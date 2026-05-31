@@ -14,11 +14,12 @@ export default function SetupPlayers() {
   // نجهز أداة التنقل
   const navigate = useNavigate();
 
-  // أسماء الألعاب
+// أسماء الألعاب
   const gameNames = {
     "who-said": "من قالها؟ 😂",
-    "forbidden-word": " الكلمة الممنوعة🤫",
-    "know-me": "من يعرفني أكثر؟ 👀"
+    "forbidden-word": "الكلمة الممنوعة 🤫",
+    "know-me": "من يعرفني أكثر؟ 👀",
+    "bring-it-fast": "جيبها بسرعة ⚡"
   };
 
   // اللاعبين الحاليين في هذه الجولة
@@ -152,7 +153,7 @@ export default function SetupPlayers() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "#f7f5ff",
         padding: "24px",
         boxSizing: "border-box",
@@ -163,9 +164,10 @@ export default function SetupPlayers() {
       <h1
         style={{
           color: "#6C4CF1",
+          paddingTop: "20px",
           textAlign: "center",
           paddingBottom: "12px",
-          fontSize: "50px"
+          fontSize: "40px"
         }}
       >
         {gameNames[gameId]}
@@ -188,7 +190,7 @@ export default function SetupPlayers() {
             marginTop: 0,
             marginBottom: "18px",
 
-            color: "#6C4CF1",
+            color: "#131214",
 
             fontFamily: "Cairo, sans-serif",
 

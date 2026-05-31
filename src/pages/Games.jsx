@@ -52,10 +52,13 @@ export default function Games() {
         background: "#F7F5FF",
 
         // مسافة داخلية
-        padding: "24px",
+        padding: "30px",
 
         // الخط المستخدم
-        fontFamily: "Cairo, sans-serif"
+        fontFamily: "Cairo, sans-serif",
+
+        //مساحة اضافية اسفل الصفحة
+        paddingBottom: "60px"
       }}
     >
 
@@ -63,7 +66,7 @@ export default function Games() {
       <div
         style={{
           textAlign: "center",
-          marginTop: "30px",
+          marginTop: "50px",
           marginBottom: "40px"
         }}
       >
@@ -91,17 +94,19 @@ export default function Games() {
             marginLeft: "100px",
           }}
         >
-          ألعاب تجمعكم🎮
+          ألعاب تجمعكم 🎮
         </p>
 
         {/* عنوان القسم */}
         <h2
           style={{
             marginTop: "35px",
-            color: "rgba(95, 146, 182, 0.8)",
-            fontSize: "30px",
+            marginLeft: "300px",
+            color: "rgba(112, 74, 227, 0.93)",
+            fontSize: "24px",
             fontWeight: "800",
             fontFamily: "Cairo, sans-serif",
+            
           }}
         >
         اختر لعبة... وخلّينا نلعب
@@ -143,7 +148,7 @@ export default function Games() {
               background: game.color,
 
               // حواف دائرية
-              borderRadius: "28px",
+              borderRadius: "32px",
 
               // مسافات داخلية
               padding: "20px",
@@ -159,7 +164,7 @@ export default function Games() {
               gap: "18px",
 
               // ارتفاع البطاقة
-              minHeight: "120px",
+              minHeight: "100px",
 
               // ظل خفيف
               boxShadow: "0 8px 20px rgba(190, 182, 182, 0.78)"
@@ -172,9 +177,9 @@ export default function Games() {
                 width: "80px",
                 height: "80px",
 
-                background: "rgba(142, 142, 235, 0.75)",
+                background: "rgba(131, 131, 165, 0.06)",
 
-                borderRadius: "22px",
+                borderRadius: "26px",
 
                 display: "flex",
 
@@ -216,7 +221,7 @@ export default function Games() {
                 style={{
                   fontSize: "16px",
                   color: "#777",
-                  marginTop: "6px"
+                  marginTop: "20px"
                 }}
               >
                 {game.description}
@@ -237,7 +242,7 @@ export default function Games() {
           style={{
             background: "#FFE8F1",
 
-            borderRadius: "28px",
+            borderRadius: "32px",
 
             padding: "20px",
 
@@ -249,9 +254,11 @@ export default function Games() {
 
             gap: "18px",
 
-            minHeight: "120px",
+            minHeight: "100px",
 
-            boxShadow: "0 8px 20px rgba(0,0,0,0.06)"
+            boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+
+            marginBottom: "20px",
           }}
         >
 
@@ -263,7 +270,7 @@ export default function Games() {
 
               background: "rgba(255,255,255,.75)",
 
-              borderRadius: "22px",
+              borderRadius: "26px",
 
               display: "flex",
 
@@ -302,7 +309,7 @@ export default function Games() {
               style={{
                 fontSize: "16px",
                 color: "#777",
-                marginTop: "6px"
+                marginTop: "8px"
               }}
             >
               بدعمك نقدر نطور أكثر 🚀

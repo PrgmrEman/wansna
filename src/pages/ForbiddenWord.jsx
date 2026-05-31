@@ -555,10 +555,14 @@ export default function ForbiddenWord() {
           <p style={textStyle}>{resultMessage}</p>
 
           <p style={textStyle}>المحاور</p>
-          <h2 dir="auto">{hostPlayer}</h2>
+          <h2 style={textH2} dir="auto">
+            {hostPlayer}
+          </h2>
 
           <p style={textStyle}>الضيف</p>
-          <h2 dir="auto">{guestPlayer}</h2>
+          <h2 style={textH2} dir="auto">
+            {guestPlayer}
+          </h2>
 
           <p style={textStyle}>
             الوقت المستغرق:{" "}
@@ -619,7 +623,9 @@ export default function ForbiddenWord() {
               {bestHosts.length > 0 ? (
                 bestHosts.map((h, i) => (
                   <div key={i}>
-                    <h2 dir="auto">{h.host}</h2>
+                    <h2 style={textH2} dir="auto">
+                      {h.host}
+                    </h2>
                     <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
                   </div>
                 ))
@@ -637,7 +643,9 @@ export default function ForbiddenWord() {
 
               {bestGuests.map((g, i) => (
                 <div key={i}>
-                  <h2 dir="auto">{g.guest}</h2>
+                  <h2 style={textH2} dir="auto">
+                    {g.guest}
+                  </h2>
                   <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
                 </div>
               ))}
@@ -652,7 +660,7 @@ export default function ForbiddenWord() {
             {bestSmartGuests.length > 0 ? (
               bestSmartGuests.map((s, i) => (
                 <div key={i}>
-                  <h2 dir="auto">{s.guest}</h2>
+                  <h2 dir="auto" style={textH2}>{s.guest}</h2>
                   <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
                 </div>
               ))

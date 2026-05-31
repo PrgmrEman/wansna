@@ -1,42 +1,12 @@
 // استيراد أداة التنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
 
-// استيراد أدوات React
-import { useEffect, useState } from "react";
-
 
 // مكون صفحة الألعاب
 export default function Games() {
 
   // أداة التنقل بين الصفحات
   const navigate = useNavigate();
-
-
-  // نخزن هنا حدث تثبيت التطبيق
-  const [installPrompt, setInstallPrompt] = useState(null);
-
-
-  // التقاط حدث التثبيت من المتصفح
-  useEffect(() => {
-    const handler = (e) => {
-
-      // منع المتصفح من إظهار التثبيت تلقائيًا
-      e.preventDefault();
-
-      // حفظ حدث التثبيت لاستخدامه عند الضغط على زر التثبيت
-      setInstallPrompt(e);
-    };
-
-
-    // الاستماع لحدث التثبيت
-    window.addEventListener("beforeinstallprompt", handler);
-
-
-    // تنظيف الحدث عند مغادرة الصفحة
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-    };
-  }, []);
 
 
   // دالة مشاركة التطبيق
@@ -64,31 +34,6 @@ export default function Games() {
   };
 
 
-  // دالة تثبيت التطبيق
-  const installApp = async () => {
-
-    // إذا لم يكن حدث التثبيت جاهزًا
-    if (!installPrompt) {
-      alert(
-        "إذا لم تظهر نافذة التثبيت، افتحي الموقع من Chrome أو Safari ثم اختاري: إضافة إلى الشاشة الرئيسية"
-      );
-      return;
-    }
-
-
-    // إظهار نافذة التثبيت الرسمية
-    installPrompt.prompt();
-
-
-    // انتظار اختيار المستخدم
-    await installPrompt.userChoice;
-
-
-    // تفريغ الحدث بعد الاستخدام
-    setInstallPrompt(null);
-  };
-
-
   // قائمة الألعاب
   const games = [
     {
@@ -113,7 +58,15 @@ export default function Games() {
       color: "#F1E7FF",
       id: "know-me",
       description: "اختبر مين يعرفك فعلًا"
-    }
+    },
+
+    {
+    title: "جيبها بسرعة",
+    emoji: "⚡",
+    color: "#8DD2A137",
+    id: "bring-it-fast",
+    description: "أول واحد يرجع ويضغط لونه يفوز"
+  }
   ];
 
 
@@ -138,42 +91,27 @@ export default function Games() {
         // الخط المستخدم
         fontFamily: "Cairo, sans-serif",
 
-        // مهم حتى تكون الأزرار العائمة داخل هذه الصفحة
+        // مهم حتى يكون زر المشاركة العائم داخل هذه الصفحة
         position: "relative"
       }}
     >
 
-      {/* أزرار عائمة أعلى اليسار */}
+      {/* زر مشاركة التطبيق */}
       <div
         style={{
           position: "absolute",
           top: "22px",
           left: "22px",
-          display: "flex",
-          gap: "8px",
           zIndex: 5
         }}
       >
-
-        {/* زر المشاركة */}
         <button
           onClick={shareApp}
           title="مشاركة التطبيق"
-          style={topIconButtonStyle}
+          style={shareIconButtonStyle}
         >
           📎
         </button>
-
-
-        {/* زر تثبيت التطبيق */}
-        <button
-          onClick={installApp}
-          title="تثبيت التطبيق"
-          style={topIconButtonStyle}
-        >
-          📲
-        </button>
-
       </div>
 
 
@@ -219,7 +157,7 @@ export default function Games() {
         <h2
           style={{
             marginTop: "35px",
-            marginLeft: "300px",
+            textAlign: "right",
             color: "rgba(112, 74, 227, 0.93)",
             fontSize: "24px",
             fontWeight: "800",
@@ -443,16 +381,27 @@ export default function Games() {
 }
 
 
-// تنسيق أزرار المشاركة والتثبيت العائمة
-const topIconButtonStyle = {
-  width: "42px",
-  height: "42px",
+// تنسيق زر المشاركة العائم
+const shareIconButtonStyle = {
   border: "none",
-  borderRadius: "50%",
-  background: "#F7F5FF",
-  
+
+  // بدون خلفية بيضاء
+  background: "transparent",
+
+  // لون الأيقونة بنفسجي مثل هوية ونسنّا
+  color: "#6C4CF1",
+
   cursor: "pointer",
-  fontSize: "22px",
+
+  fontSize: "32px",
+
   fontWeight: "900",
-  
+
+  padding: 0,
+
+  margin: 0,
+
+  lineHeight: 1,
+
+  fontFamily: "Cairo, sans-serif"
 };

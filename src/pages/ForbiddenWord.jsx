@@ -687,61 +687,68 @@ export default function ForbiddenWord() {
 /* =========================
     التنسيقات (CSS-in-JS)
 ========================= */
+/* =========================
+    التنسيقات (تشبه واجهة ونسنّا)
+========================= */
 
-const textH2 ={
+const textH2 = {
   fontFamily: "Cairo, sans-serif",
-  fontSize: "22px",
-  fontWeight: "700",
-  
-}
-
+  fontSize: "28px",
+  fontWeight: "900",
+  color: "#444",
+  margin: "8px 0"
+};
 
 const pageStyle = {
   minHeight: "100dvh",
-  background: "#f7f5ff",
+  background: "#F7F5FF",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "24px",
+  padding: "30px",
+  paddingBottom: "60px",
   boxSizing: "border-box",
   fontFamily: "Cairo, sans-serif"
 };
 
 const cardStyle = {
-  background: "white",
+  background: "#ffffff",
   width: "100%",
-  maxWidth: "520px",
+  maxWidth: "550px",
   padding: "28px",
-  borderRadius: "24px",
+  borderRadius: "32px",
   textAlign: "center",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
+  boxShadow: "0 8px 20px rgba(190, 182, 182, 0.35)"
 };
 
 const titleStyle = {
   color: "#6C4CF1",
   marginTop: 0,
-  marginBottom: "12px",
+  marginBottom: "16px",
   fontFamily: "Cairo, sans-serif",
-  fontSize: "30px",
-  fontWeight: 700,
-  padding: "6px"
+  fontSize: "36px",
+  fontWeight: "900",
+  lineHeight: 1.3
 };
 
 const textStyle = {
   color: "#777",
-  lineHeight: 1.8
+  fontSize: "17px",
+  fontWeight: "700",
+  lineHeight: 1.8,
+  fontFamily: "Cairo, sans-serif"
 };
 
 const mainButton = {
   width: "100%",
-  minHeight: "76px",
-  padding: "10px",
+  minHeight: "74px",
+  padding: "14px",
   background: "#6C4CF1",
   color: "white",
   border: "none",
-  borderRadius: "14px",
-  fontSize: "17px",
-  fontWeight: 700,
+  borderRadius: "24px",
+  fontSize: "18px",
+  fontWeight: "900",
   cursor: "pointer",
   fontFamily: "Cairo, sans-serif",
   display: "flex",
@@ -750,51 +757,54 @@ const mainButton = {
   alignItems: "center",
   gap: "4px",
   lineHeight: 1.4,
-  marginBottom: "12px"
+  marginBottom: "12px",
+  boxShadow: "0 8px 18px rgba(108,76,241,0.18)"
 };
 
 const greenButton = {
   ...mainButton,
-  background: "#2f9e44"
+  background: "#7BC99E"
 };
 
 const dangerButton = {
   ...mainButton,
-  background: "#ff4d6d"
+  background: "#FF7A9A"
 };
 
 const orangeButton = {
   ...mainButton,
-  background: "#f59f00"
+  background: "#F6C56F"
 };
 
 const buttonsContainerStyle = {
   display: "flex",
   flexDirection: "column",
-  gap: "12px",
-  marginTop: "20px"
+  gap: "14px",
+  marginTop: "22px"
 };
 
 const roleCardStyle = {
-  background: "#f7f5ff",
-  padding: "16px",
-  borderRadius: "18px",
-  marginTop: "16px"
+  background: "#F1E7FF",
+  padding: "18px",
+  borderRadius: "26px",
+  marginTop: "16px",
+  boxShadow: "0 6px 16px rgba(108,76,241,0.08)"
 };
 
 const roleLabelStyle = {
   color: "#6C4CF1",
-  fontWeight: 700,
+  fontWeight: "900",
   marginBottom: "6px",
+  fontSize: "16px",
   fontFamily: "Cairo, sans-serif"
 };
 
 const wordCardStyle = {
-  background: "#fff0f6",
+  background: "#FFE8F1",
   padding: "32px 22px",
-  borderRadius: "22px",
+  borderRadius: "28px",
   marginTop: "22px",
-  border: "2px dashed #ff4d8d",
+  border: "2px dashed #FF8AB3",
   minHeight: "120px",
   display: "flex",
   flexDirection: "column",
@@ -805,9 +815,10 @@ const wordCardStyle = {
 const forbiddenWordStyle = {
   margin: 0,
   fontFamily: "Cairo, sans-serif",
-  fontSize: "42px",
-  lineHeight: 1.6,
-  color: "#222",
+  fontSize: "46px",
+  fontWeight: "900",
+  lineHeight: 1.4,
+  color: "#444",
   wordBreak: "break-word"
 };
 
@@ -815,11 +826,12 @@ const timerStyle = {
   background: "#6C4CF1",
   color: "white",
   padding: "24px",
-  borderRadius: "20px",
-  fontSize: "48px",
-  fontWeight: 700,
+  borderRadius: "28px",
+  fontSize: "52px",
+  fontWeight: "900",
   margin: "24px 0",
-  fontFamily: "Cairo, sans-serif"
+  fontFamily: "Cairo, sans-serif",
+  boxShadow: "0 10px 24px rgba(108,76,241,0.20)"
 };
 
 const winnerGridStyle = {
@@ -830,9 +842,9 @@ const winnerGridStyle = {
 };
 
 const winnerCardStyle = {
-  background: "#f7f5ff",
-  padding: "16px",
-  borderRadius: "18px",
+  background: "#F1E7FF",
+  padding: "18px",
+  borderRadius: "26px",
   textAlign: "center",
   minHeight: "220px",
   display: "flex",
@@ -841,39 +853,43 @@ const winnerCardStyle = {
 };
 
 const smartGuestCardStyle = {
-  background: "#fff8e1",
-  padding: "16px",
-  borderRadius: "18px",
+  background: "#FFF3C7",
+  padding: "18px",
+  borderRadius: "26px",
   textAlign: "center",
   marginTop: "12px"
 };
 
 const winnerIconStyle = {
-  fontSize: "34px",
+  fontSize: "38px",
   marginBottom: "6px"
 };
 
 const winnerDescriptionStyle = {
   color: "#888",
   fontSize: "14px",
+  fontWeight: "700",
   lineHeight: 1.6,
   minHeight: "45px",
-  marginTop: "4px"
+  marginTop: "4px",
+  fontFamily: "Cairo, sans-serif"
 };
 
 const winnerTimeStyle = {
-  fontSize: "18px",
-  fontWeight: "700",
+  fontSize: "20px",
+  fontWeight: "900",
   color: "#6C4CF1",
   marginTop: "8px",
   fontFamily: "Cairo, sans-serif"
 };
 
 const resultItemStyle = {
-  background: "#f7f5ff",
+  background: "#F7F5FF",
   padding: "14px",
-  borderRadius: "14px",
+  borderRadius: "20px",
   marginTop: "10px",
-  fontWeight: 700,
-  lineHeight: 1.8
+  fontWeight: "800",
+  color: "#555",
+  lineHeight: 1.8,
+  fontFamily: "Cairo, sans-serif"
 };

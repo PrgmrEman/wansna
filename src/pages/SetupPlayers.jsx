@@ -182,12 +182,21 @@ export default function SetupPlayers() {
           boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
         }}
       >
-        {/* عنوان الكرت */}
+      {/* عنوان الكرت */}
         <h2
           style={{
             marginTop: 0,
+            marginBottom: "18px",
+
+            color: "#6C4CF1",
+
             fontFamily: "Cairo, sans-serif",
-            fontWeight: "700"
+
+            fontSize: "30px",
+
+            fontWeight: "900",
+
+            lineHeight: "1.3"
           }}
         >
           من بيلعب معك؟ 👥

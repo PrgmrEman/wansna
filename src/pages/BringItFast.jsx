@@ -6,10 +6,9 @@ import { useNavigate } from "react-router-dom";
 ========================= */
 
 // الحد الأقصى للاعبين
-const MAX_PLAYERS = 11;
+const MAX_PLAYERS = 12;
 
 // ألوان اللاعبين
-// 11 لون مختلف حتى لا يتكرر اللون بين اللاعبين
 const COLORS = [
   "#FF3B30", // أحمر
   "#007AFF", // أزرق
@@ -17,14 +16,15 @@ const COLORS = [
   "#FFD60A", // أصفر
   "#AF52DE", // بنفسجي
   "#FF9500", // برتقالي
-  "#FF2D55", // وردي
+  "#EA87D1", // وردي
   "#8E8E93", // رمادي
   "#5AC8FA", // سماوي
   "#8B5E3C", // بني
   "#000000", // أسود
+  "#00FF7F", // أخضر نعناعي
 ];
 
-// المهام التي تظهر في الجولات
+// المهام
 const TASKS = [
   "جيب قلم",
   "جيب مفتاح",
@@ -44,10 +44,10 @@ const TASKS = [
 ];
 
 /* =========================
-   دوال مساعدة خارج المكوّن
+   دوال مساعدة
 ========================= */
 
-// قراءة اللاعبين المحفوظين من صفحة الإعدادات
+// قراءة اللاعبين من صفحة الإعدادات
 function getSavedPlayers() {
   try {
     const savedPlayers = localStorage.getItem("current-players");
@@ -57,17 +57,17 @@ function getSavedPlayers() {
   }
 }
 
-// اختيار عنصر عشوائي من مصفوفة
+// اختيار عنصر عشوائي
 function getRandomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-// إرجاع الوقت الحالي
+// الوقت الحالي
 function getCurrentTime() {
   return Date.now();
 }
 
-// خلط عناصر المصفوفة
+// خلط المصفوفة
 function shuffleArray(array) {
   const shuffled = [...array];
 
@@ -82,7 +82,7 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-// إنشاء لون ثابت لكل لاعب
+// إنشاء ألوان ثابتة بدون تكرار
 function createPlayersWithColors(players) {
   const shuffledColors = shuffleArray(COLORS);
 
@@ -90,6 +90,21 @@ function createPlayersWithColors(players) {
     name: player,
     color: shuffledColors[index],
   }));
+}
+
+// تهيئة الصوت بعد ضغطة المستخدم
+function prepareSpeech() {
+  if (!window.speechSynthesis) return;
+
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance("جاهزين");
+  speech.lang = "ar-SA";
+  speech.rate = 0.9;
+  speech.pitch = 1;
+  speech.volume = 0.01;
+
+  window.speechSynthesis.speak(speech);
 }
 
 // قراءة المهمة صوتيًا
@@ -100,10 +115,13 @@ function speakArabic(text) {
 
   const speech = new SpeechSynthesisUtterance(text);
   speech.lang = "ar-SA";
-  speech.rate = 0.9;
+  speech.rate = 0.85;
   speech.pitch = 1;
+  speech.volume = 1;
 
-  window.speechSynthesis.speak(speech);
+  setTimeout(() => {
+    window.speechSynthesis.speak(speech);
+  }, 250);
 }
 
 // تنسيق الوقت
@@ -111,23 +129,12 @@ function formatTime(seconds) {
   return `${seconds.toFixed(2)} ثانية`;
 }
 
-// صياغة عدد الجولات بشكل أجمل
+// صياغة عدد الجولات
 function getWinsText(wins) {
-  if (wins === 0) {
-    return "ما فاز بأي جولة";
-  }
-
-  if (wins === 1) {
-    return "فاز بجولة واحدة 🎯";
-  }
-
-  if (wins === 2) {
-    return "فاز بجولتين 🎯🎯";
-  }
-
-  if (wins === 3) {
-    return "فاز بثلاث جولات 🏆";
-  }
+  if (wins === 0) return "ما فاز بأي جولة";
+  if (wins === 1) return "فاز بجولة واحدة 🎯";
+  if (wins === 2) return "فاز بجولتين 🎯🎯";
+  if (wins === 3) return "فاز بثلاث جولات 🏆";
 
   return `فاز بـ ${wins} جولات 🏆`;
 }
@@ -152,21 +159,15 @@ function calculateFinalStats(players, results) {
     const playerA = a[1];
     const playerB = b[1];
 
-    // الأولوية الأولى: الأكثر فوزًا
     if (playerB.wins !== playerA.wins) {
       return playerB.wins - playerA.wins;
     }
 
-    // الأولوية الثانية: الأقل متوسط وقت
     const averageA =
-      playerA.wins === 0
-        ? Infinity
-        : playerA.totalTime / playerA.wins;
+      playerA.wins === 0 ? Infinity : playerA.totalTime / playerA.wins;
 
     const averageB =
-      playerB.wins === 0
-        ? Infinity
-        : playerB.totalTime / playerB.wins;
+      playerB.wins === 0 ? Infinity : playerB.totalTime / playerB.wins;
 
     return averageA - averageB;
   });
@@ -179,15 +180,50 @@ function calculateFinalStats(players, results) {
 export default function BringItFast() {
   const navigate = useNavigate();
 
-  // قراءة اللاعبين من صفحة الإعدادات
+  // =========================
+// مشاركة اللعبة
+// =========================
+async function shareGame() {
+
+  // رابط صفحة إعداد لعبة جيبها بسرعة
+  const gameUrl =
+    `${window.location.origin}/play/bring-it-fast/setup`;
+
+  try {
+
+    // إذا الجهاز يدعم المشاركة
+    if (navigator.share) {
+
+      await navigator.share({
+        title: "ونسنّا ⚡",
+        text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
+        url: gameUrl,
+      });
+
+    }
+
+    // إذا المتصفح لا يدعم المشاركة
+    else {
+
+      await navigator.clipboard.writeText(gameUrl);
+
+      alert("تم نسخ رابط اللعبة ✅");
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+  // قراءة اللاعبين
   const players = getSavedPlayers();
 
-  // تثبيت الألوان مرة واحدة فقط عند فتح الصفحة
+  // تثبيت الألوان مرة واحدة فقط
   const [playersWithColors] = useState(() =>
     createPlayersWithColors(players)
   );
 
-  // المرحلة الحالية
+  // مراحل اللعبة
   const [phase, setPhase] = useState("setup");
 
   // عدد الجولات
@@ -202,10 +238,10 @@ export default function BringItFast() {
   // العد التنازلي
   const [countdown, setCountdown] = useState(3);
 
-  // منع تكرار الضغط بعد انتهاء الجولة
+  // منع الضغط مرتين
   const [isRoundFinished, setIsRoundFinished] = useState(false);
 
-  // نتائج الجولات
+  // النتائج
   const [results, setResults] = useState([]);
 
   // وقت بداية الجولة
@@ -215,26 +251,15 @@ export default function BringItFast() {
      دوال التحكم
   ========================= */
 
-  // بدء العد التنازلي
+  // بدء العد
   function startCountdown() {
+    prepareSpeech();
+
     setCountdown(3);
     setPhase("countdown");
   }
 
-  // بدء الجولة
-  function startRound() {
-    const task = getRandomItem(TASKS);
-
-    setCurrentTask(task);
-    setIsRoundFinished(false);
-    setPhase("playing");
-
-    speakArabic(task);
-
-    startTimeRef.current = getCurrentTime();
-  }
-
-  // إنهاء الجولة عند ضغط اللاعب على لونه
+  // إنهاء الجولة
   function finishRound(player) {
     if (isRoundFinished) return;
 
@@ -260,7 +285,7 @@ export default function BringItFast() {
     setPhase("roundResult");
   }
 
-  // الانتقال للجولة التالية أو النتائج
+  // الجولة التالية
   function goToNextRound() {
     if (currentRound >= roundCount) {
       setPhase("finalResults");
@@ -271,7 +296,7 @@ export default function BringItFast() {
     setPhase("ready");
   }
 
-  // إعادة اللعبة
+  // إعادة اللعب
   function playAgain() {
     setCurrentRound(1);
     setResults([]);
@@ -281,7 +306,7 @@ export default function BringItFast() {
   }
 
   /* =========================
-     العد التنازلي
+     العد التنازلي وتشغيل الجولة
   ========================= */
 
   useEffect(() => {
@@ -296,12 +321,18 @@ export default function BringItFast() {
     }
 
     const timer = setTimeout(() => {
-      startRound();
+      const task = getRandomItem(TASKS);
+
+      setCurrentTask(task);
+      setIsRoundFinished(false);
+      setPhase("playing");
+
+      speakArabic(task);
+
+      startTimeRef.current = getCurrentTime();
     }, 1000);
 
     return () => clearTimeout(timer);
-
-  
   }, [phase, countdown]);
 
   /* =========================
@@ -320,13 +351,15 @@ export default function BringItFast() {
           >
             رجوع للألعاب
           </button>
+
+          
         </div>
       </div>
     );
   }
 
   /* =========================
-     أكثر من 11 لاعب
+     أكثر من 12 لاعب
   ========================= */
 
   if (players.length > MAX_PLAYERS) {
@@ -336,11 +369,11 @@ export default function BringItFast() {
           <h1 style={titleStyle}>عذرًا 💜</h1>
 
           <p style={textStyle}>
-            لعبة "جيبها بسرعة" تدعم حتى 11 لاعبًا فقط.
+            لعبة "جيبها بسرعة" تدعم حتى 12 لاعبًا فقط.
           </p>
 
           <p style={textStyle}>
-            حتى يحصل كل لاعب على لون مختلف وواضح بدون تكرار أو تشابه في الألوان.
+            حتى يحصل كل لاعب على لون مختلف وواضح بدون تكرار.
           </p>
 
           <button
@@ -623,6 +656,39 @@ export default function BringItFast() {
             العب مرة ثانية
           </button>
 
+          {/* مشاركة اللعبة */}
+          <div
+            style={{
+              marginTop: "18px",
+              marginBottom: "10px",
+            }}
+          >
+
+            <p
+              style={{
+                color: "#777",
+                fontSize: "15px",
+                fontWeight: "700",
+                marginBottom: "10px",
+                fontFamily: "Cairo, sans-serif",
+              }}
+            >
+              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+            </p>
+
+            <button
+              style={{
+                ...mainButton,
+                background: "#6DD086",
+                marginTop: 0,
+              }}
+              onClick={shareGame}
+            >
+              😎 شارك اللعبة
+            </button>
+
+          </div>
+
           <button
             style={{
               ...mainButton,
@@ -732,6 +798,7 @@ const smallColorCircleStyle = {
   width: "34px",
   height: "34px",
   borderRadius: "50%",
+  border: "2px solid white",
   boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
 };
 

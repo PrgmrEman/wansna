@@ -158,6 +158,42 @@ function buildRounds(players, words) {
 export default function ForbiddenWord() {
   const navigate = useNavigate();
 
+  
+  // =========================
+// مشاركة اللعبة
+// =========================
+async function shareGame() {
+
+  // رابط صفحة إعداد لعبة جيبها بسرعة
+  const gameUrl =
+    `${window.location.origin}/play/forbidden-word/setup`;
+
+  try {
+
+    // إذا الجهاز يدعم المشاركة
+    if (navigator.share) {
+
+      await navigator.share({
+        title: "ونسنّا ⚡",
+        text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
+        url: gameUrl,
+      });
+
+    }
+
+    // إذا المتصفح لا يدعم المشاركة
+    else {
+
+      await navigator.clipboard.writeText(gameUrl);
+
+      alert("تم نسخ رابط اللعبة ✅");
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
+}
+
   // قراءة اللاعبين المحفوظين
   const savedPlayers = localStorage.getItem("current-players");
   const players = savedPlayers ? JSON.parse(savedPlayers) : [];
@@ -682,6 +718,41 @@ export default function ForbiddenWord() {
           ))}
 
           <br />
+
+           
+          {/* مشاركة اللعبة */}
+          <div
+            style={{
+              marginTop: "18px",
+              marginBottom: "10px",
+            }}
+          >
+
+            <p
+              style={{
+                color: "#777",
+                fontSize: "15px",
+                fontWeight: "700",
+                marginBottom: "10px",
+                fontFamily: "Cairo, sans-serif",
+              }}
+            >
+              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+            </p>
+
+            <button
+              style={{
+                ...mainButton,
+                background: "#6DD086",
+                marginTop: 0,
+              }}
+              onClick={shareGame}
+            >
+              😎 شارك اللعبة
+            </button>
+
+          </div>
+
 
           <button style={mainButton} onClick={() => navigate("/games")}>
             رجوع للألعاب

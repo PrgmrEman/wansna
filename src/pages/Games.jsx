@@ -9,31 +9,6 @@ export default function Games() {
   const navigate = useNavigate();
 
 
-  // دالة مشاركة التطبيق
-  const shareApp = async () => {
-    try {
-
-      // إذا الجهاز يدعم المشاركة
-      if (navigator.share) {
-        await navigator.share({
-          title: "ونسنّا",
-          text: "جربوا ونسنّا 🎮 ألعاب تجمعكم على جوال واحد",
-          url: window.location.origin,
-        });
-      }
-
-      // إذا المتصفح لا يدعم المشاركة، ننسخ الرابط
-      else {
-        await navigator.clipboard.writeText(window.location.origin);
-        alert("تم نسخ رابط ونسنّا ✅");
-      }
-
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-
   // قائمة الألعاب
   const games = [
     {
@@ -61,12 +36,12 @@ export default function Games() {
     },
 
     {
-    title: "جيبها بسرعة",
-    emoji: "⚡",
-    color: "#8DD2A137",
-    id: "bring-it-fast",
-    description: "أول واحد يرجع ويضغط لونه يفوز"
-  }
+      title: "جيبها بسرعة",
+      emoji: "⚡",
+      color: "#8DD2A137",
+      id: "bring-it-fast",
+      description: "أول واحد يرجع ويضغط لونه يفوز"
+    }
   ];
 
 
@@ -90,31 +65,8 @@ export default function Games() {
 
         // الخط المستخدم
         fontFamily: "Cairo, sans-serif",
-
-        // مهم حتى يكون زر المشاركة العائم داخل هذه الصفحة
-        position: "relative"
       }}
     >
-
-      {/* زر مشاركة التطبيق */}
-      <div
-        style={{
-          position: "absolute",
-          top: "22px",
-          left: "22px",
-          zIndex: 5
-        }}
-      >
-        <button
-          onClick={shareApp}
-          title="مشاركة التطبيق"
-          style={shareIconButtonStyle}
-        >
-          📎
-        </button>
-      </div>
-
-
 
       {/* رأس الصفحة */}
       <div
@@ -379,29 +331,3 @@ export default function Games() {
     </div>
   );
 }
-
-
-// تنسيق زر المشاركة العائم
-const shareIconButtonStyle = {
-  border: "none",
-
-  // بدون خلفية بيضاء
-  background: "transparent",
-
-  // لون الأيقونة بنفسجي مثل هوية ونسنّا
-  color: "#6C4CF1",
-
-  cursor: "pointer",
-
-  fontSize: "32px",
-
-  fontWeight: "900",
-
-  padding: 0,
-
-  margin: 0,
-
-  lineHeight: 1,
-
-  fontFamily: "Cairo, sans-serif"
-};

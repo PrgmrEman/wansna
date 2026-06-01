@@ -173,6 +173,42 @@ function gameReducer(state, action) {
 export default function KnowMe() {
   const navigate = useNavigate();
 
+  
+  // =========================
+// مشاركة اللعبة
+// =========================
+async function shareGame() {
+
+  // رابط صفحة إعداد لعبة جيبها بسرعة
+  const gameUrl =
+    `${window.location.origin}/play/know-me/setup`;
+
+  try {
+
+    // إذا الجهاز يدعم المشاركة
+    if (navigator.share) {
+
+      await navigator.share({
+        title: "ونسنّا ⚡",
+        text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
+        url: gameUrl,
+      });
+
+    }
+
+    // إذا المتصفح لا يدعم المشاركة
+    else {
+
+      await navigator.clipboard.writeText(gameUrl);
+
+      alert("تم نسخ رابط اللعبة ✅");
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
+}
+
   // قراءة اللاعبين مرة واحدة عند التحميل
   const [players] = useState(() => {
     try {
@@ -471,6 +507,40 @@ export default function KnowMe() {
           <button style={mainButton} onClick={startAnotherRound}>
             جولة أخرى
           </button>
+          
+          {/* مشاركة اللعبة */}
+          <div
+            style={{
+              marginTop: "18px",
+              marginBottom: "10px",
+            }}
+          >
+
+            <p
+              style={{
+                color: "#777",
+                fontSize: "15px",
+                fontWeight: "700",
+                marginBottom: "10px",
+                fontFamily: "Cairo, sans-serif",
+              }}
+            >
+              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+            </p>
+
+            <button
+              style={{
+                ...mainButton,
+                background: "#6DD086",
+                marginTop: 0,
+              }}
+              onClick={shareGame}
+            >
+              😎 شارك اللعبة
+            </button>
+
+          </div>
+
           <button style={secondaryButton} onClick={() => navigate("/games")}>
             رجوع للألعاب
           </button>

@@ -76,7 +76,7 @@ async function shareGame() {
 
       await navigator.share({
         title: "ونسنّا ⚡",
-        text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
+        text: "جرب لعبة من قالها  في ونسنّا 🎮",
         url: gameUrl,
       });
 

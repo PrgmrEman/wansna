@@ -40,7 +40,7 @@ export default function App() {
       <Route path="/play/forbidden-word" element={<ForbiddenWord />} />
 
       {/* صفحة "جيبها بسرعة" */}
-      <Route path="/play/bring-it-fast/setup" element={<BringItFast />}/>
+      <Route path="/play/bring-it-fast" element={<BringItFast />} />
 
       {/* صفحة الدعم */}
 

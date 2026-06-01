@@ -492,7 +492,7 @@ function PassOverlay({ playerName, message, buttonText, onConfirm }) {
     <div style={overlayStyle}>
       <div style={overlayCardStyle}>
         <h2 style={titleStyle}>{message}</h2>
-        <h1>{playerName}</h1>
+        <h1 style={textH1}>{playerName}</h1>
         <p style={textStyle}>لا تفتح الشاشة إلا لما يكون الجوال معه 👀</p>
         <button style={mainButton} onClick={onConfirm}>
           {buttonText}
@@ -505,6 +505,13 @@ function PassOverlay({ playerName, message, buttonText, onConfirm }) {
 // =========================
 //       التنسيقات
 // =========================
+
+const textH1={
+    color: "#6C4CF1",
+    marginTop: 0,
+    fontFamily: "Cairo, sans-serif",
+
+}
 
 const pageStyle = {
   minHeight: "100dvh",

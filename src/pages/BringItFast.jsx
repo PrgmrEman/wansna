@@ -24,8 +24,9 @@ const COLORS = [
   "#00FF7F", // أخضر نعناعي
 ];
 
-// المهام
+// المهام (مجموعة كبيرة ومتنوعة، معظمها متوفر في أي منزل أو جلسة)
 const TASKS = [
+  // المهمات الأصلية
   "جيب قلم",
   "جيب مفتاح",
   "جيب شيء أحمر",
@@ -40,18 +41,71 @@ const TASKS = [
   "جيب شيء ناعم",
   "جيب شيء تلبسه",
   "جيب شيء من المطبخ",
-  "جيب شيء فيه كتابة", 
+  "جيب شيء فيه كتابة",
   "جيب عطر",
   "جيب قارورة موية",
   "جيب نظارة",
-  
+
+  // 🆕 إضافات جديدة وممتعة
+  "جيب جورب",
+  "جيب ملعقة",
+  "جيب شوكة",
+  "جيب ساعة",
+  "جيب وسادة",
+  "جيب لعبة",
+  "جيب شيء شفاف",
+  "جيب شيء فيه أزرار",
+  "جيب شيء خشبي",
+  "جيب شيء بلاستيك",
+  "جيب شيء معدني",
+  "جيب شيء طويل",
+  "جيب شيء قصير",
+  "جيب شيء طري",
+  "جيب شيء صلب",
+  "جيب حذاء",
+  "جيب قبعة",
+  "جيب مشط",
+  "جيب فرشاة أسنان",
+  "جيب صابون",
+  "جيب كيس",
+  "جيب ورقة",
+  "جيب ريموت",
+  "جيب بطارية",
+  "جيب منشفة",
+  "جيب ربطة شعر",
+  "جيب محفظة",
+  "جيب عملة",
+  "جيب مغناطيس",
+  "جيب صورة",
+  "جيب شيء تأكله",
+  "جيب شيء مثلث",
+  "جيب شيء مربع",
+  "جيب شيء من غرفة النوم",
+  "جيب شيء من الحمام",
+  "جيب شيء له غطاء",
+  "جيب شيء تستخدمه في الصباح",
+  "جيب شيء ملمسه خشن",
+  "جيب شيء ملمسه أملس",
+  "جيب شيء بارد",
+  "جيب شيء فيه ألوان متعددة",
+  "جيب شيء فيه أرقام",
+  "جيب شيء له رائحة حلوة",
+  "جيب شيء يلمع",
+  "جيب شيء قديم",
+  "جيب شيء جديد",
+  "جيب شيء مضحك",
+  "جيب شيء على شكل نجمة",
+  "جيب شيء فيه 4 أرجل",
+  "جيب شيء من الثلاجة",
+  "جيب شيء يستخدم في المكتب",
+  "جيب شيء يفتح ويقفل",
 ];
 
 /* =========================
    دوال مساعدة
 ========================= */
 
-// قراءة اللاعبين من صفحة الإعدادات
+// قراءة اللاعبين من localStorage
 function getSavedPlayers() {
   try {
     const savedPlayers = localStorage.getItem("current-players");
@@ -61,97 +115,141 @@ function getSavedPlayers() {
   }
 }
 
-// اختيار عنصر عشوائي
-function getRandomItem(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-// الوقت الحالي
+// الوقت الحالي بالمللي ثانية
 function getCurrentTime() {
   return Date.now();
 }
 
-// خلط المصفوفة
+// خلط مصفوفة (خوارزمية Fisher‑Yates)
 function shuffleArray(array) {
   const shuffled = [...array];
-
   for (let i = shuffled.length - 1; i > 0; i--) {
     const randomIndex = Math.floor(Math.random() * (i + 1));
     const temp = shuffled[i];
-
     shuffled[i] = shuffled[randomIndex];
     shuffled[randomIndex] = temp;
   }
-
   return shuffled;
 }
 
-// إنشاء ألوان ثابتة بدون تكرار
+// إنشاء قائمة لاعبين بألوان فريدة (بدون تكرار)
 function createPlayersWithColors(players) {
   const shuffledColors = shuffleArray(COLORS);
-
   return players.map((player, index) => ({
     name: player,
     color: shuffledColors[index],
   }));
 }
 
-// تهيئة الصوت بعد ضغطة المستخدم
-function prepareSpeech() {
-  if (!window.speechSynthesis) return;
+// ============= تحسين الصوت (أقرب للبشر) =============
 
-  window.speechSynthesis.cancel();
+let bestArabicVoice = null;
 
-  const speech = new SpeechSynthesisUtterance("جاهزين");
-  speech.lang = "ar-SA";
-  speech.rate = 0.9;
-  speech.pitch = 1;
-  speech.volume = 0.01;
+// جلب أفضل صوت عربي متاح
+function getBestArabicVoice() {
+  if (!window.speechSynthesis) return null;
 
-  window.speechSynthesis.speak(speech);
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) return null;
+
+  // 1. صوت طبيعي (يحوي natural أو premium)
+  let naturalVoice = voices.find(
+    (v) =>
+      v.lang.startsWith("ar") &&
+      (v.name.toLowerCase().includes("natural") ||
+        v.name.toLowerCase().includes("premium"))
+  );
+
+  // 2. أصوات عربية معروفة بجودتها العالية
+  if (!naturalVoice) {
+    naturalVoice = voices.find(
+      (v) =>
+        v.lang.startsWith("ar") &&
+        (v.name.includes("Zayd") ||
+          v.name.includes("Maged") ||
+          v.name.includes("Tarik") ||
+          v.name.includes("Salma") ||
+          v.name.includes("Laila"))
+    );
+  }
+
+  // 3. أي صوت عربي
+  if (!naturalVoice) {
+    naturalVoice = voices.find((v) => v.lang.startsWith("ar"));
+  }
+
+  return naturalVoice || voices[0];
 }
 
-// قراءة المهمة صوتيًا
-function speakArabic(text) {
+// دالة نطق داخلية
+function speakInternal(text, lowVolume = false) {
   if (!window.speechSynthesis) return;
 
   window.speechSynthesis.cancel();
 
   const speech = new SpeechSynthesisUtterance(text);
   speech.lang = "ar-SA";
-  speech.rate = 0.85;
-  speech.pitch = 1;
-  speech.volume = 1;
+  speech.rate = 0.9;   // أبطأ قليلاً للوضوح
+  speech.pitch = 1.0;  // نبرة طبيعية
+  speech.volume = lowVolume ? 0.01 : 1;
 
+  if (bestArabicVoice) {
+    speech.voice = bestArabicVoice;
+  }
+
+  // تأخير بسيط لضمان تنفيذ الإلغاء أولاً
   setTimeout(() => {
     window.speechSynthesis.speak(speech);
-  }, 250);
+  }, 200);
 }
 
-// تنسيق الوقت
+// تهيئة الصوت بعد أول ضغطة من المستخدم
+function prepareSpeech() {
+  if (!window.speechSynthesis) return;
+
+  window.speechSynthesis.cancel();
+
+  // إذا لم تختر أفضل صوت بعد، حاول الآن
+  if (!bestArabicVoice) {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      bestArabicVoice = getBestArabicVoice();
+    } else {
+      // انتظر تحميل الأصوات
+      window.speechSynthesis.onvoiceschanged = () => {
+        bestArabicVoice = getBestArabicVoice();
+        speakInternal("جاهزين", true);
+      };
+      return;
+    }
+  }
+
+  speakInternal("جاهزين", true);
+}
+
+// نطق المهمة بوضوح
+function speakArabic(text) {
+  speakInternal(text, false);
+}
+
+// ============= دوال التنسيق والإحصائيات =============
+
 function formatTime(seconds) {
   return `${seconds.toFixed(2)} ثانية`;
 }
 
-// صياغة عدد الجولات
 function getWinsText(wins) {
   if (wins === 0) return "ما فاز بأي جولة";
   if (wins === 1) return "فاز بجولة واحدة 🎯";
   if (wins === 2) return "فاز بجولتين 🎯🎯";
   if (wins === 3) return "فاز بثلاث جولات 🏆";
-
   return `فاز بـ ${wins} جولات 🏆`;
 }
 
-// حساب النتائج النهائية
 function calculateFinalStats(players, results) {
   const stats = {};
-
   players.forEach((player) => {
-    stats[player] = {
-      wins: 0,
-      totalTime: 0,
-    };
+    stats[player] = { wins: 0, totalTime: 0 };
   });
 
   results.forEach((result) => {
@@ -162,17 +260,11 @@ function calculateFinalStats(players, results) {
   return Object.entries(stats).sort((a, b) => {
     const playerA = a[1];
     const playerB = b[1];
-
     if (playerB.wins !== playerA.wins) {
       return playerB.wins - playerA.wins;
     }
-
-    const averageA =
-      playerA.wins === 0 ? Infinity : playerA.totalTime / playerA.wins;
-
-    const averageB =
-      playerB.wins === 0 ? Infinity : playerB.totalTime / playerB.wins;
-
+    const averageA = playerA.wins === 0 ? Infinity : playerA.totalTime / playerA.wins;
+    const averageB = playerB.wins === 0 ? Infinity : playerB.totalTime / playerB.wins;
     return averageA - averageB;
   });
 }
@@ -185,93 +277,87 @@ export default function BringItFast() {
   const navigate = useNavigate();
 
   // =========================
-// مشاركة اللعبة
-// =========================
-async function shareGame() {
-
-  // رابط صفحة إعداد لعبة جيبها بسرعة
-  const gameUrl =
-    `${window.location.origin}/play/bring-it-fast/setup`;
-
-  try {
-
-    // إذا الجهاز يدعم المشاركة
-    if (navigator.share) {
-
-      await navigator.share({
-        title: "ونسنّا ⚡",
-        text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
-        url: gameUrl,
-      });
-
+  // مشاركة اللعبة
+  // =========================
+  async function shareGame() {
+    const gameUrl = `${window.location.origin}/play/bring-it-fast/setup`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "ونسنّا ⚡",
+          text: "جربوا لعبة جيبها بسرعة في ونسنّا 🎮",
+          url: gameUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(gameUrl);
+        alert("تم نسخ رابط اللعبة ✅");
+      }
+    } catch (error) {
+      console.log(error);
     }
-
-    // إذا المتصفح لا يدعم المشاركة
-    else {
-
-      await navigator.clipboard.writeText(gameUrl);
-
-      alert("تم نسخ رابط اللعبة ✅");
-    }
-
-  } catch (error) {
-    console.log(error);
   }
-}
 
-  // قراءة اللاعبين
+  // اللاعبون وألوانهم
   const players = getSavedPlayers();
-
-  // تثبيت الألوان مرة واحدة فقط
-  const [playersWithColors] = useState(() =>
-    createPlayersWithColors(players)
-  );
+  const [playersWithColors] = useState(() => createPlayersWithColors(players));
 
   // مراحل اللعبة
   const [phase, setPhase] = useState("setup");
-
-  // عدد الجولات
   const [roundCount, setRoundCount] = useState(3);
-
-  // الجولة الحالية
   const [currentRound, setCurrentRound] = useState(1);
-
-  // المهمة الحالية
   const [currentTask, setCurrentTask] = useState("");
-
-  // العد التنازلي
   const [countdown, setCountdown] = useState(3);
 
-  // منع الضغط مرتين
+  // منع الضغط مرتين مع مرجع ذري (useRef) لتجنب السباق
   const [isRoundFinished, setIsRoundFinished] = useState(false);
+  const isRoundFinishedRef = useRef(false);
 
-  // النتائج
   const [results, setResults] = useState([]);
-
-  // وقت بداية الجولة
   const startTimeRef = useRef(null);
+
+  // ============= إدارة المهام بدون تكرار =============
+  // نخزن قائمة مهام مخلوطة، ونأخذ منها كل مرة
+  const tasksPoolRef = useRef([]);
+
+  // إعادة بناء قائمة المهام (خلط جديد) عند الحاجة
+  function reshuffleTasksPool() {
+    tasksPoolRef.current = shuffleArray(TASKS);
+  }
+
+  // سحب مهمة عشوائية بدون تكرار
+  function getNextTask() {
+    if (tasksPoolRef.current.length === 0) {
+      // إذا نفدت القائمة، نعيد خلطها (يمكن أن تتكرر بعد النفاد)
+      reshuffleTasksPool();
+    }
+    // نأخذ أول عنصر ونحذفه
+    return tasksPoolRef.current.shift();
+  }
 
   /* =========================
      دوال التحكم
   ========================= */
 
-  // بدء العد
   function startCountdown() {
     prepareSpeech();
+
+    // إعادة تعيين حالة الجولة
+    isRoundFinishedRef.current = false;
+    setIsRoundFinished(false);
 
     setCountdown(3);
     setPhase("countdown");
   }
 
-  // إنهاء الجولة
   function finishRound(player) {
-    if (isRoundFinished) return;
+    // استخدام المرجع الذري لمنع فائزين متعددين
+    if (isRoundFinishedRef.current) return;
 
+    isRoundFinishedRef.current = true;
     setIsRoundFinished(true);
 
     const endTime = getCurrentTime();
-    const timeInSeconds =
-      (endTime - startTimeRef.current) / 1000;
+    const timeInSeconds = (endTime - startTimeRef.current) / 1000;
 
     const newResult = {
       round: currentRound,
@@ -281,109 +367,95 @@ async function shareGame() {
       time: timeInSeconds,
     };
 
-    setResults((previousResults) => [
-      ...previousResults,
-      newResult,
-    ]);
-
+    setResults((prev) => [...prev, newResult]);
     setPhase("roundResult");
   }
 
-  // الجولة التالية
   function goToNextRound() {
     if (currentRound >= roundCount) {
       setPhase("finalResults");
       return;
     }
 
-    setCurrentRound((previousRound) => previousRound + 1);
+    // إعادة تعيين الجولة الجديدة
+    isRoundFinishedRef.current = false;
+    setIsRoundFinished(false);
+
+    setCurrentRound((prev) => prev + 1);
     setPhase("ready");
   }
 
-  // إعادة اللعب
   function playAgain() {
+    // إعادة تعيين كل شيء
+    isRoundFinishedRef.current = false;
+    setIsRoundFinished(false);
+    reshuffleTasksPool();        // خلط جديد للمهام
     setCurrentRound(1);
     setResults([]);
     setCurrentTask("");
-    setIsRoundFinished(false);
     setPhase("setup");
   }
 
-  /* =========================
-     العد التنازلي وتشغيل الجولة
-  ========================= */
+  // ============= تأثيرات الصوت والتنظيف =============
 
+  // العد التنازلي والانتقال للمهمة
   useEffect(() => {
     if (phase !== "countdown") return;
 
     if (countdown > 1) {
       const timer = setTimeout(() => {
-        setCountdown((previousCountdown) => previousCountdown - 1);
+        setCountdown((prev) => prev - 1);
       }, 1000);
-
       return () => clearTimeout(timer);
     }
 
     const timer = setTimeout(() => {
-      const task = getRandomItem(TASKS);
-
+      const task = getNextTask();   // مهمة جديدة بدون تكرار
       setCurrentTask(task);
       setIsRoundFinished(false);
       setPhase("playing");
 
       speakArabic(task);
-
       startTimeRef.current = getCurrentTime();
     }, 1000);
 
     return () => clearTimeout(timer);
   }, [phase, countdown]);
 
-  /* =========================
-     لا يوجد لاعبين
-  ========================= */
+  // تنظيف الصوت عند مغادرة مرحلة اللعب أو الخروج
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, [phase]);
+
+  // ============= حالات الحافة: لا لاعبين أو أكثر من 12 =============
 
   if (players.length === 0) {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>ما فيه لاعبين محفوظين</h1>
-
-          <button
-            style={mainButton}
-            onClick={() => navigate("/games")}
-          >
+          <button style={mainButton} onClick={() => navigate("/games")}>
             رجوع للألعاب
           </button>
-
-          
         </div>
       </div>
     );
   }
-
-  /* =========================
-     أكثر من 12 لاعب
-  ========================= */
 
   if (players.length > MAX_PLAYERS) {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>عذرًا 💜</h1>
-
           <p style={textStyle}>
             لعبة "جيبها بسرعة" تدعم حتى 12 لاعبًا فقط.
           </p>
-
           <p style={textStyle}>
             حتى يحصل كل لاعب على لون مختلف وواضح بدون تكرار.
           </p>
-
-          <button
-            style={mainButton}
-            onClick={() => navigate("/games")}
-          >
+          <button style={mainButton} onClick={() => navigate("/games")}>
             رجوع للألعاب
           </button>
         </div>
@@ -394,53 +466,45 @@ async function shareGame() {
   /* =========================
      شاشة الإعداد
   ========================= */
-
   if (phase === "setup") {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>جيبها بسرعة ⚡</h1>
-
           <p style={textStyle}>
             كل لاعب يحفظ لونه، وبعد ظهور المهمة يرجع ويضغط لونه بسرعة.
           </p>
 
           <div style={colorsListStyle}>
             {playersWithColors.map((player) => (
-              <div
-                key={player.name}
-                style={playerColorRowStyle}
-              >
+              <div key={player.name} style={playerColorRowStyle}>
                 <div
                   style={{
                     ...smallColorCircleStyle,
                     background: player.color,
                   }}
                 />
-
-                <span style={playerNameStyle}>
-                  {player.name}
-                </span>
+                <span style={playerNameStyle}>{player.name}</span>
               </div>
             ))}
           </div>
 
           <label style={labelStyle}>عدد الجولات</label>
-
           <input
             type="number"
             min="1"
             max="10"
             value={roundCount}
-            onChange={(event) =>
-              setRoundCount(Number(event.target.value))
-            }
+            onChange={(e) => setRoundCount(Number(e.target.value))}
             style={inputStyle}
           />
 
           <button
             style={mainButton}
-            onClick={() => setPhase("ready")}
+            onClick={() => {
+              reshuffleTasksPool(); // خلط المهام عند بدء اللعب
+              setPhase("ready");
+            }}
           >
             حفظنا ألواننا
           </button>
@@ -452,7 +516,6 @@ async function shareGame() {
   /* =========================
      شاشة الاستعداد
   ========================= */
-
   if (phase === "ready") {
     return (
       <div style={pageStyle}>
@@ -460,17 +523,11 @@ async function shareGame() {
           <p style={roundTextStyle}>
             الجولة {currentRound} من {roundCount}
           </p>
-
           <h1 style={titleStyle}>استعدوا 🎯</h1>
-
           <p style={textStyle}>
             حطوا الجوال في مكان واضح للجميع، واستعدوا تركضون وتجيبون المطلوب.
           </p>
-
-          <button
-            style={mainButton}
-            onClick={startCountdown}
-          >
+          <button style={mainButton} onClick={startCountdown}>
             جاهزين؟ ابدأ
           </button>
         </div>
@@ -481,14 +538,15 @@ async function shareGame() {
   /* =========================
      شاشة العد التنازلي
   ========================= */
-
   if (phase === "countdown") {
     return (
       <div style={pageStyle}>
-        <div style={countdownCircleStyle}>
-          <span style={countdownTextStyle}>
-            {countdown}
-          </span>
+        <div
+          style={countdownCircleStyle}
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <span style={countdownTextStyle}>{countdown}</span>
         </div>
       </div>
     );
@@ -497,24 +555,15 @@ async function shareGame() {
   /* =========================
      شاشة اللعب
   ========================= */
-
   if (phase === "playing") {
     return (
       <div style={playPageStyle}>
         <style>
           {`
             @keyframes floatBall {
-              0% {
-                transform: translateY(0px) scale(1);
-              }
-
-              50% {
-                transform: translateY(-8px) scale(1.05);
-              }
-
-              100% {
-                transform: translateY(0px) scale(1);
-              }
+              0% { transform: translateY(0px) scale(1); }
+              50% { transform: translateY(-8px) scale(1.05); }
+              100% { transform: translateY(0px) scale(1); }
             }
           `}
         </style>
@@ -523,14 +572,8 @@ async function shareGame() {
           <p style={roundTextStyle}>
             الجولة {currentRound} من {roundCount}
           </p>
-
-          <h1 style={taskTextStyle}>
-            {currentTask}
-          </h1>
-
-          <p style={hintStyle}>
-            ارجع واضغط لونك بسرعة!
-          </p>
+          <h1 style={taskTextStyle}>{currentTask}</h1>
+          <p style={hintStyle}>ارجع واضغط لونك بسرعة!</p>
         </div>
 
         <div style={ballsGridStyle}>
@@ -554,7 +597,6 @@ async function shareGame() {
   /* =========================
      شاشة نتيجة الجولة
   ========================= */
-
   if (phase === "roundResult") {
     const lastResult = results[results.length - 1];
 
@@ -562,33 +604,12 @@ async function shareGame() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>فاز الأسرع 🏆</h1>
-
-          <div
-            style={{
-              ...winnerColorStyle,
-              background: lastResult.color,
-            }}
-          />
-
-          <h2 style={winnerNameStyle}>
-            {lastResult.winner}
-          </h2>
-
-          <p style={textStyle}>
-            المهمة: {lastResult.task}
-          </p>
-
-          <p style={timeStyle}>
-            {formatTime(lastResult.time)}
-          </p>
-
-          <button
-            style={mainButton}
-            onClick={goToNextRound}
-          >
-            {currentRound >= roundCount
-              ? "عرض النتائج"
-              : "الجولة التالية"}
+          <div style={{ ...winnerColorStyle, background: lastResult.color }} />
+          <h2 style={winnerNameStyle}>{lastResult.winner}</h2>
+          <p style={textStyle}>المهمة: {lastResult.task}</p>
+          <p style={timeStyle}>{formatTime(lastResult.time)}</p>
+          <button style={mainButton} onClick={goToNextRound}>
+            {currentRound >= roundCount ? "عرض النتائج" : "الجولة التالية"}
           </button>
         </div>
       </div>
@@ -598,76 +619,41 @@ async function shareGame() {
   /* =========================
      شاشة النتائج النهائية
   ========================= */
-
   if (phase === "finalResults") {
-    const finalStats =
-      calculateFinalStats(players, results);
-
+    const finalStats = calculateFinalStats(players, results);
     const topWinner = finalStats[0];
 
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <h1 style={titleStyle}>
-            النتائج النهائية 🏆
-          </h1>
-
-          <h2 style={winnerNameStyle}>
-            الفائز: {topWinner[0]}
-          </h2>
-
-          <p style={textStyle}>
-            {getWinsText(topWinner[1].wins)}
-          </p>
+          <h1 style={titleStyle}>النتائج النهائية 🏆</h1>
+          <h2 style={winnerNameStyle}>الفائز: {topWinner[0]}</h2>
+          <p style={textStyle}>{getWinsText(topWinner[1].wins)}</p>
 
           <div style={resultsListStyle}>
             {finalStats.map(([player, stat]) => (
-              <div
-                key={player}
-                style={resultItemStyle}
-              >
-                <strong style={resultPlayerStyle}>
-                  {player}
-                </strong>
-
-                <span style={resultDetailsStyle}>
-                  {getWinsText(stat.wins)}
-                </span>
+              <div key={player} style={resultItemStyle}>
+                <strong style={resultPlayerStyle}>{player}</strong>
+                <span style={resultDetailsStyle}>{getWinsText(stat.wins)}</span>
               </div>
             ))}
           </div>
 
-          <h3 style={subTitleStyle}>
-            تفاصيل الجولات
-          </h3>
-
+          <h3 style={subTitleStyle}>تفاصيل الجولات</h3>
           {results.map((result) => (
-            <div
-              key={result.round}
-              style={roundResultItemStyle}
-            >
+            <div key={result.round} style={roundResultItemStyle}>
               <span style={roundResultTextStyle}>
-                الجولة {result.round}: {result.winner} —{" "}
-                {formatTime(result.time)}
+                الجولة {result.round}: {result.winner} — {formatTime(result.time)}
               </span>
             </div>
           ))}
 
-          <button
-            style={mainButton}
-            onClick={playAgain}
-          >
+          <button style={mainButton} onClick={playAgain}>
             العب مرة ثانية
           </button>
 
           {/* مشاركة اللعبة */}
-          <div
-            style={{
-              marginTop: "18px",
-              marginBottom: "10px",
-            }}
-          >
-
+          <div style={{ marginTop: "18px", marginBottom: "10px" }}>
             <p
               style={{
                 color: "#777",
@@ -679,25 +665,16 @@ async function shareGame() {
             >
               أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
             </p>
-
             <button
-              style={{
-                ...mainButton,
-                background: "#6DD086",
-                marginTop: 0,
-              }}
+              style={{ ...mainButton, background: "#6DD086", marginTop: 0 }}
               onClick={shareGame}
             >
               😎 شارك اللعبة
             </button>
-
           </div>
 
           <button
-            style={{
-              ...mainButton,
-              background: "#888",
-            }}
+            style={{ ...mainButton, background: "#888" }}
             onClick={() => navigate("/games")}
           >
             رجوع للألعاب
@@ -709,7 +686,7 @@ async function shareGame() {
 }
 
 /* =========================
-   التنسيقات
+   التنسيقات (CSS-in-JS)
 ========================= */
 
 const cairoFont = "Cairo, sans-serif";

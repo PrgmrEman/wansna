@@ -272,30 +272,26 @@ export default function GoldenNumbers() {
 
   /* =========================
      تغيير رقم داخل مربع
+     يقبل أكثر من خانة مثل 55
+     ولا يتحقق من المدى أثناء الكتابة
   ========================= */
 
   function handleBoxChange(index, value) {
+    // إذا كتب المستخدم فاصل مثل شرطة أو مسافة أو فاصلة
+    // نستخدمه كإشارة للانتقال للمربع التالي
+    const shouldMoveNext = /[\s,،-]/.test(value);
+
+    // نسمح بالأرقام فقط ونحذف أي رموز
     const cleanedValue = value.replace(/[^\d]/g, "");
 
-    if (cleanedValue === "") {
-      const newBoxes = [...guessBoxes];
-      newBoxes[index] = "";
-      setGuessBoxes(newBoxes);
-      return;
-    }
-
-    const numberValue = Number(cleanedValue);
-
-    if (numberValue < rangeMin || numberValue > rangeMax) {
-      alert(`الرقم لازم يكون من ${rangeMin} إلى ${rangeMax}`);
-      return;
-    }
-
+    // تحديث قيمة المربع الحالي
     const newBoxes = [...guessBoxes];
     newBoxes[index] = cleanedValue;
     setGuessBoxes(newBoxes);
 
-    if (index < NUMBER_COUNT - 1) {
+    // الانتقال التلقائي للمربع التالي فقط عند كتابة فاصل
+    // مثال: 55- أو 55 مسافة
+    if (shouldMoveNext && index < NUMBER_COUNT - 1) {
       setTimeout(() => {
         inputRefs.current[index + 1]?.focus();
       }, 50);
@@ -303,10 +299,18 @@ export default function GoldenNumbers() {
   }
 
   /* =========================
-     الرجوع للمربع السابق عند Backspace
+     التحكم بزر التالي والرجوع
   ========================= */
 
   function handleKeyDown(index, event) {
+    // زر Enter أو Next في الجوال ينقل للمربع التالي
+    if (event.key === "Enter" && index < NUMBER_COUNT - 1) {
+      event.preventDefault();
+      inputRefs.current[index + 1]?.focus();
+      return;
+    }
+
+    // إذا ضغط Backspace والمربع فارغ، يرجع للمربع السابق
     if (event.key === "Backspace" && guessBoxes[index] === "" && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -319,11 +323,24 @@ export default function GoldenNumbers() {
   function submitGuess() {
     const guessNumbers = guessBoxes.map((item) => Number(item));
 
+    // التأكد من تعبئة كل المربعات
     if (guessBoxes.some((item) => item === "")) {
       alert("اكتبي الأرقام الأربعة قبل التثبيت");
       return;
     }
 
+    // التحقق من أن كل الأرقام داخل المدى
+    // هنا فقط نتحقق من المدى، وليس أثناء الكتابة
+    const invalidNumber = guessNumbers.find(
+      (number) => number < rangeMin || number > rangeMax
+    );
+
+    if (invalidNumber !== undefined) {
+      alert(`الرقم ${invalidNumber} يجب أن يكون بين ${rangeMin} و ${rangeMax}`);
+      return;
+    }
+
+    // منع تكرار نفس الرقم في المحاولة
     if (new Set(guessNumbers).size !== NUMBER_COUNT) {
       alert("لا تكررين نفس الرقم في المحاولة");
       return;
@@ -462,10 +479,12 @@ export default function GoldenNumbers() {
         await navigator.share({
           title: "الأرقام الذهبية",
           text: shareText,
-          url: `${ window.location.origin }/play/golden-numbers`
+          url: `${window.location.origin}/play/golden-numbers`
         });
       } else {
-        await navigator.clipboard.writeText(`${ window.location.origin }/play/golden-numbers`);
+        await navigator.clipboard.writeText(
+          `${window.location.origin}/play/golden-numbers`
+        );
         alert("تم نسخ رابط اللعبة");
       }
     } catch {
@@ -693,6 +712,7 @@ export default function GoldenNumbers() {
                 onChange={(e) => handleBoxChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 inputMode="numeric"
+                enterKeyHint={index < NUMBER_COUNT - 1 ? "next" : "done"}
                 placeholder="؟"
               />
             ))}
@@ -851,18 +871,18 @@ export default function GoldenNumbers() {
 
         <div style={cardStyle}>
           <div style={winnerIconStyle}>🏆</div>
-          <br/>
+          <br />
 
           <h2 style={titleStyle}>مبروكـ</h2>
 
           {mode === "group" && (
-            <div >
+            <div>
               <p style={textStyle}>الفائز</p>
 
               <h2 dir="auto" style={nameTitleStyle}>
                 {winnerAttempt?.player}
               </h2>
-              <br/>
+              <br />
             </div>
           )}
 
@@ -1006,7 +1026,7 @@ const mainButton = {
   width: "100%",
   minHeight: "68px",
   padding: "12px",
-  background:  "#6C4CF1",
+  background: "#6C4CF1",
   color: "white",
   border: "none",
   borderRadius: "16px",
@@ -1026,13 +1046,13 @@ const mainButton = {
 const share = {
   ...mainButton,
   background: "#14B537",
-  color: "white",
+  color: "white"
 };
 
 const secondaryButton = {
   ...mainButton,
-  background:  "#E6DDF7",
-  color: "#6C4CF1",
+  background: "#E6DDF7",
+  color: "#6C4CF1"
 };
 
 const backButton = {
@@ -1208,7 +1228,7 @@ const winnerIconStyle = {
   fontSize: "52px",
   marginBottom: "10px",
   marginTop: "10px",
-  borderRadius: "50%",
+  borderRadius: "50%"
 };
 
 const summaryBoxStyle = {

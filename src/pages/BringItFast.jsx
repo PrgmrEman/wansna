@@ -26,7 +26,6 @@ const COLORS = [
 
 // المهام (مجموعة كبيرة ومتنوعة، معظمها متوفر في أي منزل أو جلسة)
 const TASKS = [
-  // المهمات الأصلية
   "جيب قلم",
   "جيب مفتاح",
   "جيب شيء أحمر",
@@ -197,7 +196,6 @@ function speakInternal(text, lowVolume = false) {
     speech.voice = bestArabicVoice;
   }
 
-  // تأخير بسيط لضمان تنفيذ الإلغاء أولاً
   setTimeout(() => {
     window.speechSynthesis.speak(speech);
   }, 200);
@@ -209,13 +207,11 @@ function prepareSpeech() {
 
   window.speechSynthesis.cancel();
 
-  // إذا لم تختر أفضل صوت بعد، حاول الآن
   if (!bestArabicVoice) {
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       bestArabicVoice = getBestArabicVoice();
     } else {
-      // انتظر تحميل الأصوات
       window.speechSynthesis.onvoiceschanged = () => {
         bestArabicVoice = getBestArabicVoice();
         speakInternal("جاهزين", true);
@@ -308,18 +304,17 @@ export default function BringItFast() {
   const [currentTask, setCurrentTask] = useState("");
   const [countdown, setCountdown] = useState(3);
 
-  // منع الضغط مرتين مع مرجع ذري (useRef) لتجنب السباق
-  const [isRoundFinished, setIsRoundFinished] = useState(false);
+  // ✅ تمت إزالة isRoundFinished state نهائياً
+  // نعتمد فقط على المرجع الذري (useRef) لمنع السباق
   const isRoundFinishedRef = useRef(false);
 
   const [results, setResults] = useState([]);
   const startTimeRef = useRef(null);
 
   // ============= إدارة المهام بدون تكرار =============
-  // نخزن قائمة مهام مخلوطة، ونأخذ منها كل مرة
   const tasksPoolRef = useRef([]);
 
-  // إعادة بناء قائمة المهام (خلط جديد) عند الحاجة
+  // إعادة بناء قائمة المهام (خلط جديد)
   function reshuffleTasksPool() {
     tasksPoolRef.current = shuffleArray(TASKS);
   }
@@ -327,10 +322,8 @@ export default function BringItFast() {
   // سحب مهمة عشوائية بدون تكرار
   function getNextTask() {
     if (tasksPoolRef.current.length === 0) {
-      // إذا نفدت القائمة، نعيد خلطها (يمكن أن تتكرر بعد النفاد)
       reshuffleTasksPool();
     }
-    // نأخذ أول عنصر ونحذفه
     return tasksPoolRef.current.shift();
   }
 
@@ -343,18 +336,17 @@ export default function BringItFast() {
 
     // إعادة تعيين حالة الجولة
     isRoundFinishedRef.current = false;
-    setIsRoundFinished(false);
+    // ✅ لم نعد نحتاج setIsRoundFinished
 
     setCountdown(3);
     setPhase("countdown");
   }
 
   function finishRound(player) {
-    // استخدام المرجع الذري لمنع فائزين متعددين
+    // ✅ المرجع الذري يمنع تماماً أكثر من فائز
     if (isRoundFinishedRef.current) return;
 
     isRoundFinishedRef.current = true;
-    setIsRoundFinished(true);
 
     const endTime = getCurrentTime();
     const timeInSeconds = (endTime - startTimeRef.current) / 1000;
@@ -377,19 +369,14 @@ export default function BringItFast() {
       return;
     }
 
-    // إعادة تعيين الجولة الجديدة
     isRoundFinishedRef.current = false;
-    setIsRoundFinished(false);
-
     setCurrentRound((prev) => prev + 1);
     setPhase("ready");
   }
 
   function playAgain() {
-    // إعادة تعيين كل شيء
     isRoundFinishedRef.current = false;
-    setIsRoundFinished(false);
-    reshuffleTasksPool();        // خلط جديد للمهام
+    reshuffleTasksPool();
     setCurrentRound(1);
     setResults([]);
     setCurrentTask("");
@@ -398,7 +385,6 @@ export default function BringItFast() {
 
   // ============= تأثيرات الصوت والتنظيف =============
 
-  // العد التنازلي والانتقال للمهمة
   useEffect(() => {
     if (phase !== "countdown") return;
 
@@ -410,9 +396,8 @@ export default function BringItFast() {
     }
 
     const timer = setTimeout(() => {
-      const task = getNextTask();   // مهمة جديدة بدون تكرار
+      const task = getNextTask();
       setCurrentTask(task);
-      setIsRoundFinished(false);
       setPhase("playing");
 
       speakArabic(task);
@@ -420,6 +405,8 @@ export default function BringItFast() {
     }, 1000);
 
     return () => clearTimeout(timer);
+    // ✅ getNextTask ثابتة ولا تحتاج أن تكون تبعية
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, countdown]);
 
   // تنظيف الصوت عند مغادرة مرحلة اللعب أو الخروج
@@ -502,7 +489,7 @@ export default function BringItFast() {
           <button
             style={mainButton}
             onClick={() => {
-              reshuffleTasksPool(); // خلط المهام عند بدء اللعب
+              reshuffleTasksPool();
               setPhase("ready");
             }}
           >
@@ -652,7 +639,6 @@ export default function BringItFast() {
             العب مرة ثانية
           </button>
 
-          {/* مشاركة اللعبة */}
           <div style={{ marginTop: "18px", marginBottom: "10px" }}>
             <p
               style={{
@@ -686,7 +672,7 @@ export default function BringItFast() {
 }
 
 /* =========================
-   التنسيقات (CSS-in-JS)
+   التنسيقات
 ========================= */
 
 const cairoFont = "Cairo, sans-serif";

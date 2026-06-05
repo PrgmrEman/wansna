@@ -11,6 +11,8 @@ import KnowMe from "./pages/KnowMe";
 import ForbiddenWord from "./pages/ForbiddenWord";
 import Support from "./pages/Support";
 import BringItFast from "./pages/BringItFast";
+import GoldenNumbers from "./pages/GoldenNumbers";
+
 
 
 // التطبيق الرئيسي
@@ -41,6 +43,10 @@ export default function App() {
 
       {/* صفحة "جيبها بسرعة" */}
       <Route path="/play/bring-it-fast" element={<BringItFast />} />
+
+      {/* صفحة "الأرقام الذهبية" */}
+      <Route path="/play/golden-numbers" element={<GoldenNumbers />} />
+
 
       {/* صفحة الدعم */}
 

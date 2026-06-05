@@ -40,8 +40,16 @@ export default function Games() {
       emoji: "⚡",
       color: "#8DD2A137",
       id: "bring-it-fast",
-      description: "أول واحد يرجع ويضغط لونه يفوز"
-    }
+      description: "اللي يجيبها اسرع يفوز"
+    },
+
+      {
+    title: "الأرقام الذهبية",
+    emoji: "🔒",
+    color: "#F5ECA04D" , 
+    id: "golden-numbers",
+    description: "اكتشف الأرقام الذهبية بأقل عدد من المحاولات"
+  },
   ];
 
 
@@ -109,7 +117,7 @@ export default function Games() {
         <h2
           style={{
             marginTop: "35px",
-            textAlign: "right",
+            
             color: "rgba(112, 74, 227, 0.93)",
             fontSize: "24px",
             fontWeight: "800",
@@ -141,9 +149,13 @@ export default function Games() {
             key={game.id}
 
             // الانتقال لصفحة إعداد اللعبة عند الضغط
-            onClick={() => {
+          onClick={() => {
+            if (game.id === "golden-numbers") {
+              navigate("/play/golden-numbers");
+            } else {
               navigate(`/play/${game.id}/setup`);
-            }}
+            }
+          }}
 
             style={{
 

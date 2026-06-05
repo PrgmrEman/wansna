@@ -446,7 +446,8 @@ async function shareGame() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>كلمة ممنوعة 🤫</h1>
-          <p style={textStyle}>اختاروا موضوع اللعبة</p>
+          <p style={textStyle}>اختاروا موضوعاً للعبة</p>
+          <br />
 
           {Object.entries(categories).map(([key, item]) => (
             <button

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import emailjs from "@emailjs/browser";
+// استيراد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
 
 /**
  * صفحة الدعم - تتيح للمستخدمين دعم التطبيق مالياً ومشاركة الاقتراحات.
@@ -115,99 +117,119 @@ export default function Support() {
   // واجهة المستخدم
   // ========================
   return (
-    <div style={pageStyle}>
-      <div style={cardStyle}>
-        {/* شعار التطبيق */}
-        <img src="/logo.png" alt="شعار ونسنا" style={logoStyle} />
+    <>
+      {/* منطقة تحسين محركات البحث */}
+      <Helmet>
+        <title>ادعم ونسنا | الدعم والتواصل</title>
+        <meta
+          name="description"
+          content="ادعم تطبيق ونسنا للألعاب الجماعية. شاركنا اقتراحاتك وأفكارك لتطوير الألعاب. الدعم اختياري ويساعدنا على الاستمرار."
+        />
+        <link rel="canonical" href="https://wansna.vercel.app/support" />
+        {/* تحسين المشاركة على السوشل ميديا */}
+        <meta property="og:title" content="ادعم ونسنا | الدعم والتواصل" />
+        <meta
+          property="og:description"
+          content="ادعم تطبيق ونسنا وشاركنا اقتراحاتك لتطوير ألعاب جماعية جديدة."
+        />
+        <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+        <meta property="og:url" content="https://wansna.vercel.app/support" />
+      </Helmet>
 
-        <h1 style={titleStyle}>ادعم ونسنّا</h1>
-        <p style={textStyle}>
-          إذا استمتعت بالألعاب، دعمك يساعدنا على تطوير التطبيق
-          وإضافة ألعاب جماعية جديدة وممتعة
-        </p>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          {/* شعار التطبيق */}
+          <img src="/logo.png" alt="شعار ونسنا" style={logoStyle} />
 
-        {/* ========== قسم التحويل البنكي ========== */}
-        <div style={supportBoxStyle}>
-          <p style={labelStyle}>بيانات التحويل</p>
-
-          <div style={infoItemStyle}>
-            <span style={infoLabelStyle}>البنك</span>
-            <strong>{bankName}</strong>
-          </div>
-          <div style={infoItemStyle}>
-            <span style={infoLabelStyle}>اسم الحساب</span>
-            <strong>{accountName}</strong>
-          </div>
-          <div style={infoItemStyle}>
-            <span style={infoLabelStyle}>IBAN</span>
-            <strong dir="ltr" style={ibanStyle}>{iban}</strong>
-          </div>
-          <button style={copyButtonStyle} onClick={copyIban}>
-            نسخ رقم الآيبان
-          </button>
-        </div>
-
-        {/* ========== الباركود ========== */}
-        <div style={qrBoxStyle}>
-          <img src="/qr.jpeg" alt="QR Code للتحويل" style={qrImageStyle} />
-          <button style={copyButtonStyle} onClick={downloadQR}>
-            حفظ الباركود
-          </button>
-        </div>
-
-        {/* ========== نموذج التواصل ========== */}
-        <div style={contactBoxStyle}>
-          <p style={contactTitleStyle}>📬 شاركنا رأيك ومقترحاتك</p>
-          <p style={contactSubStyle}>
-            أكتب اسمك وفكرتك، وبتوصلنا مباشرة
+          <h1 style={titleStyle}>ادعم ونسنّا</h1>
+          <p style={textStyle}>
+            إذا استمتعت بالألعاب، دعمك يساعدنا على تطوير التطبيق
+            وإضافة ألعاب جماعية جديدة وممتعة
           </p>
 
-          <form onSubmit={handleSubmit} style={formStyle}>
-            <input
-              type="text"
-              placeholder="اسمك"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-              required
-            />
-            <textarea
-              placeholder="اكتب اقتراحك أو فكرتك هنا..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              style={textareaStyle}
-              rows="4"
-              required
-            />
-            <button
-              type="submit"
-              disabled={sending}
-              style={{
-                ...copyButtonStyle,
-                opacity: sending ? 0.7 : 1,
-                cursor: sending ? "not-allowed" : "pointer",
-              }}
-            >
-              {sending ? "جاري الإرسال..." : "إرسال ✨"}
+          {/* ========== قسم التحويل البنكي ========== */}
+          <div style={supportBoxStyle}>
+            <p style={labelStyle}>بيانات التحويل</p>
+
+            <div style={infoItemStyle}>
+              <span style={infoLabelStyle}>البنك</span>
+              <strong>{bankName}</strong>
+            </div>
+            <div style={infoItemStyle}>
+              <span style={infoLabelStyle}>اسم الحساب</span>
+              <strong>{accountName}</strong>
+            </div>
+            <div style={infoItemStyle}>
+              <span style={infoLabelStyle}>IBAN</span>
+              <strong dir="ltr" style={ibanStyle}>{iban}</strong>
+            </div>
+            <button style={copyButtonStyle} onClick={copyIban}>
+              نسخ رقم الآيبان
             </button>
+          </div>
 
-            {/* رسائل الحالة */}
-            {status === "success" && (
-              <p style={successMsgStyle}>✅ تم الإرسال بنجاح! شكراً لمشاركتك.</p>
-            )}
-            {status === "error" && (
-              <p style={errorMsgStyle}>❌ حدث خطأ، حاول مرة أخرى.</p>
-            )}
-          </form>
+          {/* ========== الباركود ========== */}
+          <div style={qrBoxStyle}>
+            <img src="/qr.jpeg" alt="QR Code للتحويل" style={qrImageStyle} />
+            <button style={copyButtonStyle} onClick={downloadQR}>
+              حفظ الباركود
+            </button>
+          </div>
+
+          {/* ========== نموذج التواصل ========== */}
+          <div style={contactBoxStyle}>
+            <p style={contactTitleStyle}>📬 شاركنا رأيك ومقترحاتك</p>
+            <p style={contactSubStyle}>
+              أكتب اسمك وفكرتك، وبتوصلنا مباشرة
+            </p>
+
+            <form onSubmit={handleSubmit} style={formStyle}>
+              <input
+                type="text"
+                placeholder="اسمك"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={inputStyle}
+                required
+              />
+              <textarea
+                placeholder="اكتب اقتراحك أو فكرتك هنا..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                style={textareaStyle}
+                rows="4"
+                required
+              />
+              <button
+                type="submit"
+                disabled={sending}
+                style={{
+                  ...copyButtonStyle,
+                  opacity: sending ? 0.7 : 1,
+                  cursor: sending ? "not-allowed" : "pointer",
+                }}
+              >
+                {sending ? "جاري الإرسال..." : "إرسال ✨"}
+              </button>
+
+              {/* رسائل الحالة */}
+              {status === "success" && (
+                <p style={successMsgStyle}>✅ تم الإرسال بنجاح! شكراً لمشاركتك.</p>
+              )}
+              {status === "error" && (
+                <p style={errorMsgStyle}>❌ حدث خطأ، حاول مرة أخرى.</p>
+              )}
+            </form>
+          </div>
+
+          <p style={noteStyle}>❤️ الدعم اختياري بالكامل، ووجودك معنا هو الأهم</p>
+
+          <button style={backButtonStyle} onClick={() => navigate("/games")}>
+            رجوع للألعاب
+          </button>
         </div>
-
-        <p style={noteStyle}>❤️ الدعم اختياري بالكامل، ووجودك معنا هو الأهم</p>
-
-        <button style={backButtonStyle} onClick={() => navigate("/games")}>
-          رجوع للألعاب
-        </button>
       </div>
-    </div>
+    </>
   );
 }
 

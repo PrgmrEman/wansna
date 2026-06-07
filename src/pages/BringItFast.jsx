@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+// استيراد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
 
 /* =========================
    إعدادات عامة
@@ -323,14 +325,12 @@ export default function BringItFast() {
 
     // إعادة تعيين حالة الجولة
     isRoundFinishedRef.current = false;
-    // ✅ لم نعد نحتاج setIsRoundFinished
 
     setCountdown(3);
     setPhase("countdown");
   }
 
   function finishRound(player) {
-    // ✅ المرجع الذري يمنع تماماً أكثر من فائز
     if (isRoundFinishedRef.current) return;
 
     isRoundFinishedRef.current = true;
@@ -392,7 +392,6 @@ export default function BringItFast() {
     }, 1000);
 
     return () => clearTimeout(timer);
-    // ✅ getNextTask ثابتة ولا تحتاج أن تكون تبعية
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, countdown]);
 
@@ -407,33 +406,51 @@ export default function BringItFast() {
 
   if (players.length === 0) {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>ما فيه لاعبين محفوظين</h1>
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة | ونسنا - لعبة السرعة والتحدي</title>
+          <meta name="description" content="لعبة جيبها بسرعة الجماعية: جيب الشيء المطلوب بسرعة واضغط على لونك قبل غيرك. مناسبة لجميع الجلسات." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+          <meta property="og:title" content="جيبها بسرعة | ونسنا" />
+          <meta property="og:description" content="لعبة جماعية حماسية: جيب الشيء المطلوب واضغط لونك!" />
+          <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+          <meta property="og:url" content="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>ما فيه لاعبين محفوظين</h1>
+            <button style={mainButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (players.length > MAX_PLAYERS) {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>عذرًا 💜</h1>
-          <p style={textStyle}>
-            لعبة "جيبها بسرعة" تدعم حتى 12 لاعبًا فقط.
-          </p>
-          <p style={textStyle}>
-            حتى يحصل كل لاعب على لون مختلف وواضح بدون تكرار.
-          </p>
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة | ونسنا - لعبة السرعة والتحدي</title>
+          <meta name="description" content="لعبة جيبها بسرعة تدعم حتى 12 لاعباً." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>عذرًا 💜</h1>
+            <p style={textStyle}>
+              لعبة "جيبها بسرعة" تدعم حتى 12 لاعبًا فقط.
+            </p>
+            <p style={textStyle}>
+              حتى يحصل كل لاعب على لون مختلف وواضح بدون تكرار.
+            </p>
+            <button style={mainButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -442,48 +459,55 @@ export default function BringItFast() {
   ========================= */
   if (phase === "setup") {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>جيبها بسرعة ⚡</h1>
-          <p style={textStyle}>
-            كل لاعب يحفظ لونه، وبعد ظهور المهمة يرجع ويضغط لونه بسرعة.
-          </p>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة - الإعداد | ونسنا</title>
+          <meta name="description" content="جهز لاعبيك واختار عدد الجولات. كل لاعب يحفظ لونه ويستعد للسباق." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>جيبها بسرعة ⚡</h1>
+            <p style={textStyle}>
+              كل لاعب يحفظ لونه، وبعد ظهور المهمة يرجع ويضغط لونه بسرعة.
+            </p>
 
-          <div style={colorsListStyle}>
-            {playersWithColors.map((player) => (
-              <div key={player.name} style={playerColorRowStyle}>
-                <div
-                  style={{
-                    ...smallColorCircleStyle,
-                    background: player.color,
-                  }}
-                />
-                <span style={playerNameStyle}>{player.name}</span>
-              </div>
-            ))}
+            <div style={colorsListStyle}>
+              {playersWithColors.map((player) => (
+                <div key={player.name} style={playerColorRowStyle}>
+                  <div
+                    style={{
+                      ...smallColorCircleStyle,
+                      background: player.color,
+                    }}
+                  />
+                  <span style={playerNameStyle}>{player.name}</span>
+                </div>
+              ))}
+            </div>
+
+            <label style={labelStyle}>عدد الجولات</label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={roundCount}
+              onChange={(e) => setRoundCount(Number(e.target.value))}
+              style={inputStyle}
+            />
+
+            <button
+              style={mainButton}
+              onClick={() => {
+                reshuffleTasksPool();
+                setPhase("ready");
+              }}
+            >
+              حفظنا ألواننا
+            </button>
           </div>
-
-          <label style={labelStyle}>عدد الجولات</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={roundCount}
-            onChange={(e) => setRoundCount(Number(e.target.value))}
-            style={inputStyle}
-          />
-
-          <button
-            style={mainButton}
-            onClick={() => {
-              reshuffleTasksPool();
-              setPhase("ready");
-            }}
-          >
-            حفظنا ألواننا
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -492,20 +516,27 @@ export default function BringItFast() {
   ========================= */
   if (phase === "ready") {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <p style={roundTextStyle}>
-            الجولة {currentRound} من {roundCount}
-          </p>
-          <h1 style={titleStyle}>استعدوا 🎯</h1>
-          <p style={textStyle}>
-            حطوا الجوال في مكان واضح للجميع، واستعدوا تركضون وتجيبون المطلوب.
-          </p>
-          <button style={mainButton} onClick={startCountdown}>
-            جاهزين؟ ابدأ
-          </button>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة - استعدوا | ونسنا</title>
+          <meta name="description" content={`الجولة ${currentRound} من ${roundCount}. استعدوا للانطلاق!`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <p style={roundTextStyle}>
+              الجولة {currentRound} من {roundCount}
+            </p>
+            <h1 style={titleStyle}>استعدوا 🎯</h1>
+            <p style={textStyle}>
+              حطوا الجوال في مكان واضح للجميع، واستعدوا تركضون وتجيبون المطلوب.
+            </p>
+            <button style={mainButton} onClick={startCountdown}>
+              جاهزين؟ ابدأ
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -514,15 +545,22 @@ export default function BringItFast() {
   ========================= */
   if (phase === "countdown") {
     return (
-      <div style={pageStyle}>
-        <div
-          style={countdownCircleStyle}
-          aria-live="assertive"
-          aria-atomic="true"
-        >
-          <span style={countdownTextStyle}>{countdown}</span>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة - العد التنازلي | ونسنا</title>
+          <meta name="description" content="العد التنازلي بدأ... استعد للمهمة!" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div
+            style={countdownCircleStyle}
+            aria-live="assertive"
+            aria-atomic="true"
+          >
+            <span style={countdownTextStyle}>{countdown}</span>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -531,40 +569,47 @@ export default function BringItFast() {
   ========================= */
   if (phase === "playing") {
     return (
-      <div style={playPageStyle}>
-        <style>
-          {`
-            @keyframes floatBall {
-              0% { transform: translateY(0px) scale(1); }
-              50% { transform: translateY(-8px) scale(1.05); }
-              100% { transform: translateY(0px) scale(1); }
-            }
-          `}
-        </style>
+      <>
+        <Helmet>
+          <title>جيبها بسرعة - العب الآن | ونسنا</title>
+          <meta name="description" content={`المهمة الحالية: ${currentTask}. ارجع واضغط لونك بسرعة!`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={playPageStyle}>
+          <style>
+            {`
+              @keyframes floatBall {
+                0% { transform: translateY(0px) scale(1); }
+                50% { transform: translateY(-8px) scale(1.05); }
+                100% { transform: translateY(0px) scale(1); }
+              }
+            `}
+          </style>
 
-        <div style={taskHeaderStyle}>
-          <p style={roundTextStyle}>
-            الجولة {currentRound} من {roundCount}
-          </p>
-          <h1 style={taskTextStyle}>{currentTask}</h1>
-          <p style={hintStyle}>ارجع واضغط لونك بسرعة!</p>
-        </div>
+          <div style={taskHeaderStyle}>
+            <p style={roundTextStyle}>
+              الجولة {currentRound} من {roundCount}
+            </p>
+            <h1 style={taskTextStyle}>{currentTask}</h1>
+            <p style={hintStyle}>ارجع واضغط لونك بسرعة!</p>
+          </div>
 
-        <div style={ballsGridStyle}>
-          {playersWithColors.map((player, index) => (
-            <button
-              key={player.name}
-              aria-label={player.name}
-              onClick={() => finishRound(player)}
-              style={{
-                ...colorBallStyle,
-                background: player.color,
-                animationDelay: `${index * 0.12}s`,
-              }}
-            />
-          ))}
+          <div style={ballsGridStyle}>
+            {playersWithColors.map((player, index) => (
+              <button
+                key={player.name}
+                aria-label={player.name}
+                onClick={() => finishRound(player)}
+                style={{
+                  ...colorBallStyle,
+                  background: player.color,
+                  animationDelay: `${index * 0.12}s`,
+                }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -575,18 +620,25 @@ export default function BringItFast() {
     const lastResult = results[results.length - 1];
 
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>فاز الأسرع 🏆</h1>
-          <div style={{ ...winnerColorStyle, background: lastResult.color }} />
-          <h2 style={winnerNameStyle}>{lastResult.winner}</h2>
-          <p style={textStyle}>المهمة: {lastResult.task}</p>
-          <p style={timeStyle}>{formatTime(lastResult.time)}</p>
-          <button style={mainButton} onClick={goToNextRound}>
-            {currentRound >= roundCount ? "عرض النتائج" : "الجولة التالية"}
-          </button>
+      <>
+        <Helmet>
+          <title>نتيجة الجولة - جيبها بسرعة | ونسنا</title>
+          <meta name="description" content={`${lastResult.winner} فاز بالجولة في ${formatTime(lastResult.time)}`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>فاز الأسرع 🏆</h1>
+            <div style={{ ...winnerColorStyle, background: lastResult.color }} />
+            <h2 style={winnerNameStyle}>{lastResult.winner}</h2>
+            <p style={textStyle}>المهمة: {lastResult.task}</p>
+            <p style={timeStyle}>{formatTime(lastResult.time)}</p>
+            <button style={mainButton} onClick={goToNextRound}>
+              {currentRound >= roundCount ? "عرض النتائج" : "الجولة التالية"}
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -598,62 +650,69 @@ export default function BringItFast() {
     const topWinner = finalStats[0];
 
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>النتائج النهائية 🏆</h1>
-          <h2 style={winnerNameStyle}>الفائز: {topWinner[0]}</h2>
-          <p style={textStyle}>{getWinsText(topWinner[1].wins)}</p>
+      <>
+        <Helmet>
+          <title>النتائج النهائية - جيبها بسرعة | ونسنا</title>
+          <meta name="description" content={`${topWinner[0]} هو الفائز بلعبة جيبها بسرعة! شاهد تفاصيل الجولات.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/bring-it-fast" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>النتائج النهائية 🏆</h1>
+            <h2 style={winnerNameStyle}>الفائز: {topWinner[0]}</h2>
+            <p style={textStyle}>{getWinsText(topWinner[1].wins)}</p>
 
-          <div style={resultsListStyle}>
-            {finalStats.map(([player, stat]) => (
-              <div key={player} style={resultItemStyle}>
-                <strong style={resultPlayerStyle}>{player}</strong>
-                <span style={resultDetailsStyle}>{getWinsText(stat.wins)}</span>
+            <div style={resultsListStyle}>
+              {finalStats.map(([player, stat]) => (
+                <div key={player} style={resultItemStyle}>
+                  <strong style={resultPlayerStyle}>{player}</strong>
+                  <span style={resultDetailsStyle}>{getWinsText(stat.wins)}</span>
+                </div>
+              ))}
+            </div>
+
+            <h3 style={subTitleStyle}>تفاصيل الجولات</h3>
+            {results.map((result) => (
+              <div key={result.round} style={roundResultItemStyle}>
+                <span style={roundResultTextStyle}>
+                  الجولة {result.round}: {result.winner} — {formatTime(result.time)}
+                </span>
               </div>
             ))}
-          </div>
 
-          <h3 style={subTitleStyle}>تفاصيل الجولات</h3>
-          {results.map((result) => (
-            <div key={result.round} style={roundResultItemStyle}>
-              <span style={roundResultTextStyle}>
-                الجولة {result.round}: {result.winner} — {formatTime(result.time)}
-              </span>
+            <button style={mainButton} onClick={playAgain}>
+              العب مرة ثانية
+            </button>
+
+            <div style={{ marginTop: "18px", marginBottom: "10px" }}>
+              <p
+                style={{
+                  color: "#777",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  marginBottom: "10px",
+                  fontFamily: "Cairo, sans-serif",
+                }}
+              >
+                أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+              </p>
+              <button
+                style={{ ...mainButton, background: "#6DD086", marginTop: 0 }}
+                onClick={shareGame}
+              >
+                😎 شارك اللعبة
+              </button>
             </div>
-          ))}
 
-          <button style={mainButton} onClick={playAgain}>
-            العب مرة ثانية
-          </button>
-
-          <div style={{ marginTop: "18px", marginBottom: "10px" }}>
-            <p
-              style={{
-                color: "#777",
-                fontSize: "15px",
-                fontWeight: "700",
-                marginBottom: "10px",
-                fontFamily: "Cairo, sans-serif",
-              }}
-            >
-              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
-            </p>
             <button
-              style={{ ...mainButton, background: "#6DD086", marginTop: 0 }}
-              onClick={shareGame}
+              style={{ ...mainButton, background: "#888" }}
+              onClick={() => navigate("/games")}
             >
-              😎 شارك اللعبة
+              رجوع للألعاب
             </button>
           </div>
-
-          <button
-            style={{ ...mainButton, background: "#888" }}
-            onClick={() => navigate("/games")}
-          >
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 }

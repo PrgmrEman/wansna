@@ -1,5 +1,7 @@
 import { useReducer, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+// استيراد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
 
 // =========================
 //    دوال مساعدة خارج المكوّن
@@ -173,41 +175,28 @@ function gameReducer(state, action) {
 export default function KnowMe() {
   const navigate = useNavigate();
 
-  
   // =========================
-// مشاركة اللعبة
-// =========================
-async function shareGame() {
+  // مشاركة اللعبة
+  // =========================
+  async function shareGame() {
+    const gameUrl =
+      `${window.location.origin}/play/know-me/setup`;
 
-  // رابط صفحة إعداد لعبة جيبها بسرعة
-  const gameUrl =
-    `${window.location.origin}/play/know-me/setup`;
-
-  try {
-
-    // إذا الجهاز يدعم المشاركة
-    if (navigator.share) {
-
-      await navigator.share({
-        title: "ونسنّا ⚡",
-        text: "جرب لعبة من يعرفني اكثر؟ في ونسنّا 🎮",
-        url: gameUrl,
-      });
-
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "ونسنّا ⚡",
+          text: "جرب لعبة من يعرفني اكثر؟ في ونسنّا 🎮",
+          url: gameUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(gameUrl);
+        alert("تم نسخ رابط اللعبة ✅");
+      }
+    } catch (error) {
+      console.log(error);
     }
-
-    // إذا المتصفح لا يدعم المشاركة
-    else {
-
-      await navigator.clipboard.writeText(gameUrl);
-
-      alert("تم نسخ رابط اللعبة ✅");
-    }
-
-  } catch (error) {
-    console.log(error);
   }
-}
 
   // قراءة اللاعبين مرة واحدة عند التحميل
   const [players] = useState(() => {
@@ -316,14 +305,25 @@ async function shareGame() {
   // ============ التحقق من عدد اللاعبين ============
   if (players.length < 2) {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h2>يلزم على الأقل لاعبَين اثنين للعب</h2>
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+      <>
+        <Helmet>
+          <title>من يعرفني أكثر؟ | ونسنا - لعبة الأسئلة الشخصية</title>
+          <meta name="description" content="لعبة من يعرفني أكثر؟ الجماعية: اختبر مين يعرفك فعلًا بين أصحابك. اكتب أسئلة عن نفسك وشوف مين جاوب صح!" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+          <meta property="og:title" content="من يعرفني أكثر؟ | ونسنا" />
+          <meta property="og:description" content="لعبة من يعرفني أكثر؟ - اكتشف مين يعرفك أكثر بين أصحابك!" />
+          <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+          <meta property="og:url" content="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h2>يلزم على الأقل لاعبَين اثنين للعب</h2>
+            <button style={mainButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -331,81 +331,95 @@ async function shareGame() {
 
   if (state.phase === "choose") {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>مين يعرفني أكثر؟ 👀</h1>
-          <p style={textStyle}>التطبيق بيختار شخص، وهو يكتب أسئلة عن نفسه.</p>
-          <button style={mainButton} onClick={chooseRandomPlayer}>
-            اختيار لاعب عشوائي
-          </button>
+      <>
+        <Helmet>
+          <title>من يعرفني أكثر؟ - اختر لاعب | ونسنا</title>
+          <meta name="description" content="التطبيق سيختار لاعب عشوائي ليكتب أسئلة عن نفسه. اختبروا معرفتكم ببعض!" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>مين يعرفني أكثر؟ 👀</h1>
+            <p style={textStyle}>التطبيق بيختار شخص، وهو يكتب أسئلة عن نفسه.</p>
+            <button style={mainButton} onClick={chooseRandomPlayer}>
+              اختيار لاعب عشوائي
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (state.phase === "questions") {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>مرروا الجوال إلى</h2>
-          <h1 style={{ color: "#6C4CF1" }}>{state.mainPlayer}</h1>
-          <p style={textStyle}>
-            اكتب من 3 إلى 5 أسئلة عن نفسك
-            <br />
-            ومع كل سؤال إجابة صحيحة واختيارين خاطئين
-          </p>
+      <>
+        <Helmet>
+          <title>من يعرفني أكثر؟ - كتابة الأسئلة | ونسنا</title>
+          <meta name="description" content={`${state.mainPlayer} يكتب أسئلة عن نفسه. اكتب من 3 إلى 5 أسئلة مع إجابات.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>مرروا الجوال إلى</h2>
+            <h1 style={{ color: "#6C4CF1" }}>{state.mainPlayer}</h1>
+            <p style={textStyle}>
+              اكتب من 3 إلى 5 أسئلة عن نفسك
+              <br />
+              ومع كل سؤال إجابة صحيحة واختيارين خاطئين
+            </p>
 
-          {state.questions.map((q, index) => (
-            <div key={q.id} style={questionCardStyle}>
-              <div style={questionHeaderStyle}>
-                <strong>السؤال {index + 1}</strong>
-                <button
-                  onClick={() => deleteQuestion(q.id)}
-                  style={deleteButtonStyle}
-                >
-                  حذف السؤال
-                </button>
+            {state.questions.map((q, index) => (
+              <div key={q.id} style={questionCardStyle}>
+                <div style={questionHeaderStyle}>
+                  <strong>السؤال {index + 1}</strong>
+                  <button
+                    onClick={() => deleteQuestion(q.id)}
+                    style={deleteButtonStyle}
+                  >
+                    حذف السؤال
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="السؤال"
+                  value={q.question}
+                  onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="الإجابة الصحيحة"
+                  value={q.correctAnswer}
+                  onChange={(e) => updateQuestion(q.id, "correctAnswer", e.target.value)}
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="إجابة خطأ 1"
+                  value={q.wrong1}
+                  onChange={(e) => updateQuestion(q.id, "wrong1", e.target.value)}
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="إجابة خطأ 2"
+                  value={q.wrong2}
+                  onChange={(e) => updateQuestion(q.id, "wrong2", e.target.value)}
+                  style={inputStyle}
+                />
               </div>
+            ))}
 
-              <input
-                type="text"
-                placeholder="السؤال"
-                value={q.question}
-                onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                placeholder="الإجابة الصحيحة"
-                value={q.correctAnswer}
-                onChange={(e) => updateQuestion(q.id, "correctAnswer", e.target.value)}
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                placeholder="إجابة خطأ 1"
-                value={q.wrong1}
-                onChange={(e) => updateQuestion(q.id, "wrong1", e.target.value)}
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                placeholder="إجابة خطأ 2"
-                value={q.wrong2}
-                onChange={(e) => updateQuestion(q.id, "wrong2", e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-          ))}
-
-          <button style={secondaryButton} onClick={addQuestion}>
-            + إضافة سؤال
-          </button>
-          <button style={mainButton} onClick={saveQuestions}>
-            بدء اللعبة
-          </button>
+            <button style={secondaryButton} onClick={addQuestion}>
+              + إضافة سؤال
+            </button>
+            <button style={mainButton} onClick={saveQuestions}>
+              بدء اللعبة
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -414,59 +428,73 @@ async function shareGame() {
     const currentPlayer = answerPlayers[state.answeringIndex];
 
     return (
-      <div style={pageStyle}>
-        {state.showPassScreen && (
-          <PassOverlay
-            playerName={currentPlayer}
-            message="مرروا الجوال إلى"
-            buttonText="نعم هذا أنا"
-            onConfirm={hidePassScreen}
-          />
-        )}
+      <>
+        <Helmet>
+          <title>جاري الإجابة - من يعرفني أكثر؟ | ونسنا</title>
+          <meta name="description" content={`${currentPlayer} يجيب على أسئلة ${state.mainPlayer}. السؤال ${state.questionIndex + 1} من ${state.questions.length}.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          {state.showPassScreen && (
+            <PassOverlay
+              playerName={currentPlayer}
+              message="مرروا الجوال إلى"
+              buttonText="نعم هذا أنا"
+              onConfirm={hidePassScreen}
+            />
+          )}
 
-        <div style={cardStyle}>
-          <p style={textStyle}>
-            السؤال {state.questionIndex + 1} من {state.questions.length}
-          </p>
-          <p style={textStyle}>
-            الدور على: <strong>{currentPlayer}</strong>
-          </p>
-          <h2 style={titleStyle}>{currentQ.question}</h2>
+          <div style={cardStyle}>
+            <p style={textStyle}>
+              السؤال {state.questionIndex + 1} من {state.questions.length}
+            </p>
+            <p style={textStyle}>
+              الدور على: <strong>{currentPlayer}</strong>
+            </p>
+            <h2 style={titleStyle}>{currentQ.question}</h2>
 
-          {state.answerOptions.map((opt) => (
-            <button key={opt} style={mainButton} onClick={() => selectAnswer(opt)}>
-              {opt}
-            </button>
-          ))}
+            {state.answerOptions.map((opt) => (
+              <button key={opt} style={mainButton} onClick={() => selectAnswer(opt)}>
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (state.phase === "prediction") {
     return (
-      <div style={pageStyle}>
-        {state.showPassScreen && (
-          <PassOverlay
-            playerName={state.mainPlayer}
-            message="مرروا الجوال إلى"
-            buttonText="جاهز أشوف"
-            onConfirm={hidePassScreen}
-          />
-        )}
+      <>
+        <Helmet>
+          <title>توقع الفائز - من يعرفني أكثر؟ | ونسنا</title>
+          <meta name="description" content={`${state.mainPlayer} يتوقع مين يعرفه أكثر بين أصحابه.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          {state.showPassScreen && (
+            <PassOverlay
+              playerName={state.mainPlayer}
+              message="مرروا الجوال إلى"
+              buttonText="جاهز أشوف"
+              onConfirm={hidePassScreen}
+            />
+          )}
 
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>مين تتوقع يعرفك أكثر؟ 👀</h2>
-          <p style={textStyle}>
-            اختار الشخص اللي تتوقع أنه جاوب أكثر إجابات صحيحة عنك.
-          </p>
-          {answerPlayers.map((p) => (
-            <button key={p} style={mainButton} onClick={() => choosePrediction(p)}>
-              {p}
-            </button>
-          ))}
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>مين تتوقع يعرفك أكثر؟ 👀</h2>
+            <p style={textStyle}>
+              اختار الشخص اللي تتوقع أنه جاوب أكثر إجابات صحيحة عنك.
+            </p>
+            {answerPlayers.map((p) => (
+              <button key={p} style={mainButton} onClick={() => choosePrediction(p)}>
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -489,63 +517,68 @@ async function shareGame() {
     }
 
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>النتائج 🏆</h1>
-          <p style={textStyle}>
-            توقع {state.mainPlayer}: {state.predictedPlayer}
-          </p>
-          <p style={resultMessageStyle}>{message}</p>
-
-          {sortedScores.map(([p, s]) => (
-            <div key={p} style={resultItemStyle}>
-              {winners.includes(p) && highest > 0 ? "👑 " : ""}
-              {p} — {s} نقطة
-            </div>
-          ))}
-
-          <button style={mainButton} onClick={startAnotherRound}>
-            جولة أخرى
-          </button>
-          
-          {/* مشاركة اللعبة */}
-          <div
-            style={{
-              marginTop: "18px",
-              marginBottom: "10px",
-            }}
-          >
-
-            <p
-              style={{
-                color: "#777",
-                fontSize: "15px",
-                fontWeight: "700",
-                marginBottom: "10px",
-                fontFamily: "Cairo, sans-serif",
-              }}
-            >
-              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+      <>
+        <Helmet>
+          <title>النتائج - من يعرفني أكثر؟ | ونسنا</title>
+          <meta name="description" content={`${state.mainPlayer} اكتشف مين يعرفه أكثر! النتائج النهائية للعبة.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/know-me" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>النتائج 🏆</h1>
+            <p style={textStyle}>
+              توقع {state.mainPlayer}: {state.predictedPlayer}
             </p>
+            <p style={resultMessageStyle}>{message}</p>
 
-            <button
-              style={{
-                ...mainButton,
-                background: "#6DD086",
-                marginTop: 0,
-              }}
-              onClick={shareGame}
-            >
-              😎 شارك اللعبة
+            {sortedScores.map(([p, s]) => (
+              <div key={p} style={resultItemStyle}>
+                {winners.includes(p) && highest > 0 ? "👑 " : ""}
+                {p} — {s} نقطة
+              </div>
+            ))}
+
+            <button style={mainButton} onClick={startAnotherRound}>
+              جولة أخرى
             </button>
+            
+            {/* مشاركة اللعبة */}
+            <div
+              style={{
+                marginTop: "18px",
+                marginBottom: "10px",
+              }}
+            >
+              <p
+                style={{
+                  color: "#777",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  marginBottom: "10px",
+                  fontFamily: "Cairo, sans-serif",
+                }}
+              >
+                أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+              </p>
 
+              <button
+                style={{
+                  ...mainButton,
+                  background: "#6DD086",
+                  marginTop: 0,
+                }}
+                onClick={shareGame}
+              >
+                😎 شارك اللعبة
+              </button>
+            </div>
+
+            <button style={secondaryButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
           </div>
-
-          <button style={secondaryButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -580,7 +613,6 @@ const textH1={
     color: "#6C4CF1",
     marginTop: 0,
     fontFamily: "Cairo, sans-serif",
-
 }
 
 const pageStyle = {

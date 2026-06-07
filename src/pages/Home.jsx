@@ -1,142 +1,92 @@
 // نستورد أداة التنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
-
+// نستورد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
 
 // هذا هو مكون الصفحة الرئيسية
 export default function Home() {
-
   // هذا المتغير يسمح لنا ننتقل لصفحات ثانية
   const navigate = useNavigate();
 
-
   // الأشياء اللي داخل return تظهر بالموقع
   return (
+    <>
+      {/* منطقة تحسين محركات البحث */}
+      <Helmet>
+        <title>ونسنا - خلّ الجو يونس | ألعاب جماعية ممتعة</title>
+        <meta
+          name="description"
+          content="موقع ونسنا يقدم ألعاباً جماعية ممتعة وتحديات شيقة مثل Bring It Fast، Forbidden Word، Who Said. ابدأ اللعب الآن واستمتع مع أصحابك!"
+        />
+        <link rel="canonical" href="https://wansna.vercel.app/" />
+        {/* تحسين المشاركة على السوشل ميديا */}
+        <meta property="og:title" content="ونسنا - خلّ الجو يونس" />
+        <meta
+          property="og:description"
+          content="موقع ونسنا يقدم ألعاباً جماعية ممتعة وتحديات شيقة. ابدأ اللعب الآن واستمتع مع أصحابك!"
+        />
+        <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+        <meta property="og:url" content="https://wansna.vercel.app/" />
+      </Helmet>
 
-    // الحاوية الرئيسية للصفحة
-    <div style={{
-
-      // يجعل الصفحة بطول كامل الشاشة
-      minHeight: "100vh",
-
-      // تفعيل flexbox
-      display: "flex",
-
-      // توسيط العناصر أفقياً
-      justifyContent: "center",
-
-      // توسيط العناصر عمودياً
-      alignItems: "center",
-
-      // ترتيب العناصر فوق بعض (عمودي)
-      flexDirection: "column",
-
-      // لون الخلفية
-      background: "#f7f5ff",
-
-      // مسافة داخلية
-      padding: "24px",
-
-      // يمنع مشاكل الحجم
-      boxSizing: "border-box",
-
-      // تطبيق خط Cairo
-      fontFamily: "Cairo, sans-serif"
-    }}>
-
-
-      {/* شعار التطبيق */}
-      <img
-
-        // رابط الصورة من مجلد public
-        src="/logo.png"
-
-        // وصف للصورة
-        alt="ونسنا"
-
-        // تنسيق الصورة
+      {/* الحاوية الرئيسية للصفحة */}
+      <div
         style={{
-
-          // حجم متجاوب مع جميع الشاشات
-          width: "min(70vw, 320px)",
-
-          // مسافة تحت الشعار
-          marginBottom: "32px"
-        }}
-      />
-
-
-      {/* النص تحت الشعار */}
-      <p style={{
-
-        // حجم خط متجاوب
-        fontSize: "clamp(20px, 4vw, 28px)",
-
-        // سماكة الخط
-        fontWeight: 700,
-
-        // لون النص
-        color: "#5f5a72",
-
-        // إزالة الهوامش الافتراضية
-        margin: 0
-      }}>
-
-        {/* النص الظاهر */}
-        خلّ الجو يونس
-
-      </p>
-
-
-      {/* زر ابدأ اللعب */}
-      <button
-
-        // عند الضغط ينتقل لصفحة الألعاب
-        onClick={() => navigate("/games")}
-
-
-        // تنسيق الزر
-        style={{
-
-          // مسافة فوق الزر
-          marginTop: "24px",
-
-          // مساحة داخلية
-          padding: "14px 36px",
-
-          // حجم الخط
-          fontSize: "clamp(16px, 3vw, 20px)",
-
-          // سماكة الخط
-          fontWeight: 700,
-
-          // لون الخلفية
-          background: "#6C4CF1",
-
-          // لون النص
-          color: "white",
-
-          // إزالة الحدود
-          border: "none",
-
-          // تدوير الأطراف
-          borderRadius: "14px",
-
-          // تغيير شكل الماوس
-          cursor: "pointer",
-
-          // خط Cairo
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          background: "#f7f5ff",
+          padding: "24px",
+          boxSizing: "border-box",
           fontFamily: "Cairo, sans-serif",
-
-          // ظل خفيف
-          boxShadow: "0 8px 20px rgba(108,76,241,0.3)"
         }}
       >
+        {/* شعار التطبيق */}
+        <img
+          src="/logo.png"
+          alt="شعار ونسنا - خلّ الجو يونس"
+          style={{
+            width: "min(70vw, 320px)",
+            marginBottom: "32px",
+          }}
+        />
 
-        {/* النص داخل الزر */}
-        ابدأ اللعب 🎮
+        {/* النص تحت الشعار */}
+        <p
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            color: "#5f5a72",
+            margin: 0,
+          }}
+        >
+          خلّ الجو يُونس
+        </p>
+        <br></br>
 
-      </button>
-
-    </div>
+        {/* زر ابدأ اللعب */}
+        <button
+          onClick={() => navigate("/games")}
+          aria-label="ابدأ اللعب والتنقل إلى قائمة الألعاب"
+          style={{
+            marginTop: "24px",
+            padding: "14px 36px",
+            fontSize: "clamp(16px, 3vw, 20px)",
+            fontWeight: 700,
+            background: "#6C4CF1",
+            color: "white",
+            border: "none",
+            borderRadius: "14px",
+            cursor: "pointer",
+            fontFamily: "Cairo, sans-serif",
+            boxShadow: "0 8px 20px rgba(108,76,241,0.3)",
+          }}
+        >
+          ابدأ اللعب 🎮
+        </button>
+      </div>
+    </>
   );
 }

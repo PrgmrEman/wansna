@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// استيراد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
 
 /* =========================
    إنشاء خطة التخمين
@@ -58,42 +60,28 @@ function createGuessPlan(players, entries, guessRounds) {
 export default function WhoSaid() {
   const navigate = useNavigate();
 
-
-  
   // =========================
-// مشاركة اللعبة
-// =========================
-async function shareGame() {
+  // مشاركة اللعبة
+  // =========================
+  async function shareGame() {
+    const gameUrl =
+      `${window.location.origin}/play/who-said/setup`;
 
-  // رابط صفحة إعداد لعبة جيبها بسرعة
-  const gameUrl =
-    `${window.location.origin}/play/who-said/setup`;
-
-  try {
-
-    // إذا الجهاز يدعم المشاركة
-    if (navigator.share) {
-
-      await navigator.share({
-        title: "ونسنّا ⚡",
-        text: "جرب لعبة من قالها  في ونسنّا 🎮",
-        url: gameUrl,
-      });
-
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "ونسنّا ⚡",
+          text: "جرب لعبة من قالها في ونسنّا 🎮",
+          url: gameUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(gameUrl);
+        alert("تم نسخ رابط اللعبة ✅");
+      }
+    } catch (error) {
+      console.log(error);
     }
-
-    // إذا المتصفح لا يدعم المشاركة
-    else {
-
-      await navigator.clipboard.writeText(gameUrl);
-
-      alert("تم نسخ رابط اللعبة ✅");
-    }
-
-  } catch (error) {
-    console.log(error);
   }
-}
 
   // قراءة اللاعبين بأمان
   const players = (() => {
@@ -218,14 +206,25 @@ async function shareGame() {
   ========================= */
   if (players.length === 0) {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h2>ما فيه لاعبين محفوظين</h2>
-          <button style={mainButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+      <>
+        <Helmet>
+          <title>من قالها؟ | ونسنا - لعبة تخمين العبارات</title>
+          <meta name="description" content="لعبة من قالها؟ الجماعية: اكتبوا عبارات، خمنوا مين قالها، واكسبوا نقاط. استمتعوا مع أصدقائكم على ونسنا." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/who-said" />
+          <meta property="og:title" content="من قالها؟ | ونسنا" />
+          <meta property="og:description" content="لعبة تخمين العبارات المضحكة مع الأصدقاء" />
+          <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+          <meta property="og:url" content="https://wansna.vercel.app/play/who-said" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h2>ما فيه لاعبين محفوظين</h2>
+            <button style={mainButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -234,25 +233,36 @@ async function shareGame() {
   ========================= */
   if (phase === "type") {
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>من قالها؟ 😂</h1>
-          <p style={textStyle}>اختاروا نوع المشاركة</p>
-          {/* ✅ وصف اللعبة المحدث */}
-          <p style={{ color: "#6C4CF1", fontWeight: 700, marginTop: -10 ,paddingBottom: "15px",}}>
-          😂  خمّن ✅ تكسب نقطة، خمّن ❌ يربح اللي قالها
-          </p>
-          <button style={mainButton} onClick={() => chooseType("كلمة")}>
-            كلمة
-          </button>
-          <button style={mainButton} onClick={() => chooseType("جملة")}>
-            جملة
-          </button>
-          <button style={mainButton} onClick={() => chooseType("موقف")}>
-            موقف
-          </button>
+      <>
+        <Helmet>
+          <title>من قالها؟ | ونسنا - لعبة تخمين العبارات</title>
+          <meta name="description" content="لعبة من قالها؟ الجماعية: اكتبوا عبارات، خمنوا مين قالها، واكسبوا نقاط. استمتعوا مع أصدقائكم على ونسنا." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/who-said" />
+          <meta property="og:title" content="من قالها؟ | ونسنا" />
+          <meta property="og:description" content="لعبة تخمين العبارات المضحكة مع الأصدقاء" />
+          <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+          <meta property="og:url" content="https://wansna.vercel.app/play/who-said" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>من قالها؟ 😂</h1>
+            <p style={textStyle}>اختاروا نوع المشاركة</p>
+            {/* ✅ وصف اللعبة المحدث */}
+            <p style={{ color: "#6C4CF1", fontWeight: 700, marginTop: -10 ,paddingBottom: "15px",}}>
+            😂  خمّن ✅ تكسب نقطة، خمّن ❌ يربح اللي قالها
+            </p>
+            <button style={mainButton} onClick={() => chooseType("كلمة")}>
+              كلمة
+            </button>
+            <button style={mainButton} onClick={() => chooseType("جملة")}>
+              جملة
+            </button>
+            <button style={mainButton} onClick={() => chooseType("موقف")}>
+              موقف
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -262,31 +272,38 @@ async function shareGame() {
   if (phase === "writing") {
     const currentPlayer = players[writingIndex];
     return (
-      <div style={pageStyle}>
-        {showPassScreen && (
-          <PassOverlay
-            playerName={currentPlayer}
-            message="مرروا الجوال إلى"
-            buttonText="نعم هذا أنا"
-            onConfirm={() => setShowPassScreen(false)}
-          />
-        )}
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>مرحلة الكتابة ✍️</h2>
-          <p style={textStyle}>
-            اكتب {entryType}
-          </p>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={`اكتب ${entryType} هنا`}
-            style={textareaStyle}
-          />
-          <button style={mainButton} onClick={saveEntry}>
-            حفظ
-          </button>
+      <>
+        <Helmet>
+          <title>من قالها؟ - مرحلة الكتابة | ونسنا</title>
+          <meta name="description" content="اللاعبون يكتبون عباراتهم الآن في لعبة من قالها؟" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/who-said" />
+        </Helmet>
+        <div style={pageStyle}>
+          {showPassScreen && (
+            <PassOverlay
+              playerName={currentPlayer}
+              message="مرروا الجوال إلى"
+              buttonText="نعم هذا أنا"
+              onConfirm={() => setShowPassScreen(false)}
+            />
+          )}
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>مرحلة الكتابة ✍️</h2>
+            <p style={textStyle}>
+              اكتب {entryType}
+            </p>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={`اكتب ${entryType} هنا`}
+              style={textareaStyle}
+            />
+            <button style={mainButton} onClick={saveEntry}>
+              حفظ
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -297,36 +314,43 @@ async function shareGame() {
     const guessOptions = players.filter((p) => p !== currentGuesser);
 
     return (
-      <div style={pageStyle}>
-        {showPassScreen && (
-          <PassOverlay
-            playerName={currentGuesser}
-            message="مرروا الجوال إلى"
-            buttonText="جاهز أخمن"
-            onConfirm={() => setShowPassScreen(false)}
-          />
-        )}
+      <>
+        <Helmet>
+          <title>من قالها؟ - جاري التخمين | ونسنا</title>
+          <meta name="description" content="خمنوا من صاحب العبارة في لعبة من قالها؟" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/who-said" />
+        </Helmet>
+        <div style={pageStyle}>
+          {showPassScreen && (
+            <PassOverlay
+              playerName={currentGuesser}
+              message="مرروا الجوال إلى"
+              buttonText="جاهز أخمن"
+              onConfirm={() => setShowPassScreen(false)}
+            />
+          )}
 
-        <div style={cardStyle}>
-          <p style={textStyle}>
-            الجولة {currentRound} من {guessRounds}
-          </p>
-          <h2 style={titleStyle}>مين قالها؟</h2>
-          <div style={quoteStyle}>{currentEntry?.text}</div>
-          <p style={textStyle}>اختر صاحب العبارة</p>
-          <div style={guessGridStyle}>
-            {guessOptions.map((player) => (
-              <button
-                key={player}
-                style={guessButtonStyle}
-                onClick={() => makeGuess(player)}
-              >
-                {player}
-              </button>
-            ))}
+          <div style={cardStyle}>
+            <p style={textStyle}>
+              الجولة {currentRound} من {guessRounds}
+            </p>
+            <h2 style={titleStyle}>مين قالها؟</h2>
+            <div style={quoteStyle}>{currentEntry?.text}</div>
+            <p style={textStyle}>اختر صاحب العبارة</p>
+            <div style={guessGridStyle}>
+              {guessOptions.map((player) => (
+                <button
+                  key={player}
+                  style={guessButtonStyle}
+                  onClick={() => makeGuess(player)}
+                >
+                  {player}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -340,64 +364,71 @@ async function shareGame() {
       sortedScores.filter(([, s]) => s === highestScore).length > 1;
 
     return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>النتائج 🏆</h1>
-          {allTiedAtTop && highestScore > 0 && (
-            <p style={textStyle}>تعادل جميل بين المتصدرين 😄</p>
-          )}
-          {sortedScores.map(([player, score]) => (
-            <div key={player} style={resultItemStyle}>
-              {score === highestScore && highestScore > 0 && "👑 "}
-              {player} — {score} نقطة
-            </div>
-          ))}
-          <button style={mainButton} onClick={playAgain}>
-            العب مرة أخرى
-          </button>
-          
-          
-          {/* مشاركة اللعبة */}
-          <div
-            style={{
-              marginTop: "18px",
-              marginBottom: "10px",
-            }}
-          >
-
-            <p
+      <>
+        <Helmet>
+          <title>نتائج من قالها؟ | ونسنا</title>
+          <meta name="description" content="شوف النتائج النهائية للعبة من قالها؟ مين فاز؟" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/who-said" />
+        </Helmet>
+        <div style={pageStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>النتائج 🏆</h1>
+            {allTiedAtTop && highestScore > 0 && (
+              <p style={textStyle}>تعادل جميل بين المتصدرين 😄</p>
+            )}
+            {sortedScores.map(([player, score]) => (
+              <div key={player} style={resultItemStyle}>
+                {score === highestScore && highestScore > 0 && "👑 "}
+                {player} — {score} نقطة
+              </div>
+            ))}
+            <button style={mainButton} onClick={playAgain}>
+              العب مرة أخرى
+            </button>
+            
+            
+            {/* مشاركة اللعبة */}
+            <div
               style={{
-                color: "#777",
-                fontSize: "15px",
-                fontWeight: "700",
+                marginTop: "18px",
                 marginBottom: "10px",
-                fontFamily: "Cairo, sans-serif",
               }}
             >
-              أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
-            </p>
+
+              <p
+                style={{
+                  color: "#777",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  marginBottom: "10px",
+                  fontFamily: "Cairo, sans-serif",
+                }}
+              >
+                أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
+              </p>
+
+              <button
+                style={{
+                  ...mainButton,
+                  background: "#6DD086",
+                  marginTop: 0,
+                }}
+                onClick={shareGame}
+              >
+                😎 شارك اللعبة
+              </button>
+
+            </div>
 
             <button
-              style={{
-                ...mainButton,
-                background: "#6DD086",
-                marginTop: 0,
-              }}
-              onClick={shareGame}
+              style={{ ...mainButton, background: "#888" }}
+              onClick={() => navigate("/games")}
             >
-              😎 شارك اللعبة
+              رجوع للألعاب
             </button>
-
           </div>
-
-          <button
-            style={{ ...mainButton, background: "#888" }}
-            onClick={() => navigate("/games")}
-          >
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 }
@@ -533,8 +564,6 @@ const overlayStyle = {
   padding: "24px",
   boxSizing: "border-box",
   zIndex: 100,
-
-
 };
 
 const overlayCardStyle = {

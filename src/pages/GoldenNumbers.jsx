@@ -1,8 +1,7 @@
-// نستورد أدوات React
+// نستورد الأدوات المطلوبة
 import { useEffect, useRef, useState } from "react";
-
-// نستورد التنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 // عدد الأرقام الذهبية في اللعبة
 const NUMBER_COUNT = 4;
@@ -14,15 +13,12 @@ const NUMBER_COUNT = 4;
 // توليد 4 أرقام عشوائية بدون تكرار داخل مدى محدد
 function generateSecretNumbers(min, max) {
   const numbers = [];
-
   while (numbers.length < NUMBER_COUNT) {
     const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-
     if (!numbers.includes(randomNumber)) {
       numbers.push(randomNumber);
     }
   }
-
   return numbers;
 }
 
@@ -37,7 +33,6 @@ function getResultMessage(count) {
   if (count === 1) return "لديك رقم واحد ذهبي";
   if (count === 2) return "لديك رقمين ذهبيين";
   if (count === 3) return "لديك ثلاث أرقام ذهبية";
-
   return "مبروك! اكتشفت جميع الأرقام الذهبية";
 }
 
@@ -55,7 +50,6 @@ function getResultIcon(count, type) {
 function formatTime(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
@@ -131,14 +125,10 @@ export default function GoldenNumbers() {
       timerRef.current = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
+    } else {
+      clearInterval(timerRef.current);
     }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
+    return () => clearInterval(timerRef.current);
   }, [phase]);
 
   /* =========================
@@ -290,7 +280,6 @@ export default function GoldenNumbers() {
     setGuessBoxes(newBoxes);
 
     // الانتقال التلقائي للمربع التالي فقط عند كتابة فاصل
-    // مثال: 55- أو 55 مسافة
     if (shouldMoveNext && index < NUMBER_COUNT - 1) {
       setTimeout(() => {
         inputRefs.current[index + 1]?.focus();
@@ -330,7 +319,6 @@ export default function GoldenNumbers() {
     }
 
     // التحقق من أن كل الأرقام داخل المدى
-    // هنا فقط نتحقق من المدى، وليس أثناء الكتابة
     const invalidNumber = guessNumbers.find(
       (number) => number < rangeMin || number > rangeMax
     );
@@ -359,7 +347,6 @@ export default function GoldenNumbers() {
     };
 
     const newAttempts = [...attempts, newAttempt];
-
     setAttempts(newAttempts);
     setLastMessage(message);
     setGuessBoxes(["", "", "", ""]);
@@ -374,6 +361,7 @@ export default function GoldenNumbers() {
       return;
     }
 
+    // فردي: ابق في شاشة اللعب
     setTimeout(() => {
       inputRefs.current[0]?.focus();
     }, 100);
@@ -385,7 +373,6 @@ export default function GoldenNumbers() {
 
   function speakAttemptResult() {
     const lastAttempt = attempts[attempts.length - 1];
-
     if (!lastAttempt) return;
 
     if (!("speechSynthesis" in window)) {
@@ -412,7 +399,6 @@ export default function GoldenNumbers() {
     const confirmed = window.confirm(
       "هل تريد الانسحاب؟ ستظهر لك الأرقام الذهبية، ثم تكمل اللعبة مع باقي اللاعبين."
     );
-
     if (!confirmed) return;
 
     const withdrawAttempt = {
@@ -460,9 +446,7 @@ export default function GoldenNumbers() {
 
   function revealAndEnd() {
     const confirmed = window.confirm("هل تريد كشف الأرقام الذهبية؟");
-
     if (!confirmed) return;
-
     setPhase("giveup");
   }
 
@@ -473,7 +457,6 @@ export default function GoldenNumbers() {
   async function shareGame() {
     const shareText =
       "جربت لعبة الأرقام الذهبية في ونسنّا 🔒✨ لعبة تخمين واستنتاج ممتعة!";
-
     try {
       if (navigator.share) {
         await navigator.share({
@@ -498,7 +481,6 @@ export default function GoldenNumbers() {
 
   function resetGame() {
     localStorage.removeItem("golden-numbers-mode");
-
     setPhase("mode");
     setMode("");
     setMinInput("1");
@@ -517,439 +499,419 @@ export default function GoldenNumbers() {
   }
 
   /* =========================
-     شاشة اختيار النمط
+     عرض الشاشات المختلفة
   ========================= */
 
+  // ============ شاشة اختيار النمط ============
   if (phase === "mode") {
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>اختاري طريقة اللعب</h2>
-
-          <button style={secondaryButton} onClick={() => chooseMode("solo")}>
-            👤 لعبة فردية
-            <small>النظام يختار الأرقام وأنت تخمنين</small>
-          </button>
-
-          <button style={secondaryButton} onClick={() => chooseMode("group")}>
-            👥 لعبة جماعية
-            <small>أضيفوا اللاعبين ثم العبوا بالتناوب</small>
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+      <>
+        <Helmet>
+          <title>الأرقام الذهبية - اختر النمط | ونسنا</title>
+          <meta name="description" content="اختار نمط لعبة الأرقام الذهبية: فردي أو جماعي. اكتشف الأرقام السرية بأقل عدد من المحاولات." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>اختاري طريقة اللعب</h2>
+            <button style={secondaryButton} onClick={() => chooseMode("solo")}>
+              👤 لعبة فردية
+              <small>النظام يختار الأرقام وأنت تخمنين</small>
+            </button>
+            <button style={secondaryButton} onClick={() => chooseMode("group")}>
+              👥 لعبة جماعية
+              <small>أضيفوا اللاعبين ثم العبوا بالتناوب</small>
+            </button>
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  /* =========================
-     شاشة اختيار المدى
-  ========================= */
-
+  // ============ شاشة اختيار المدى ============
   if (phase === "range") {
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>اختاري مدى الأرقام</h2>
-
-          <p style={textStyle}>
-            حددي بداية ونهاية الأرقام التي سيختار منها النظام الأرقام الذهبية.
-          </p>
-
-          <div style={rangeRowStyle}>
-            <div>
-              <label style={labelStyle}>إلى</label>
-              <input
-                style={inputStyle}
-                value={maxInput}
-                onChange={(e) => setMaxInput(e.target.value)}
-                inputMode="numeric"
-                placeholder="100"
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>من</label>
-              <input
-                style={inputStyle}
-                value={minInput}
-                onChange={(e) => setMinInput(e.target.value)}
-                inputMode="numeric"
-                placeholder="1"
-              />
-            </div>
-          </div>
-
-          <button style={mainButton} onClick={startGame}>
-            بداية اللعبة
-          </button>
-
-          {mode === "solo" && (
-            <button
-              style={secondaryButton}
-              onClick={() => setPhase("explain")}
-            >
-              شرح اللعبة
-            </button>
-          )}
-
-          <button style={backButton} onClick={resetGame}>
-            اختيار نمط جديد
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* =========================
-     شاشة الشرح للفردي
-  ========================= */
-
-  if (phase === "explain") {
-    return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>طريقة اللعب</h2>
-
-          <div style={explainBoxStyle}>
-            <p>النظام يختار 4 أرقام ذهبية سرية من المدى الذي تم تحديده</p>
-            <p>اكتب 4 أرقام في المربعات</p>
-            <p>بعد كل محاولة سيخبرك النظام كم رقمًا ذهبيًا اكتشفت</p>
-            <p>الترتيب لا يهم، المهم معرفة الأرقام الأربعة</p>
-            <p>كل محاولة تُحفظ بالأسفل بدون عرض الأرقام</p>
-          </div>
-
-          <button style={mainButton} onClick={startGame}>
-            بداية اللعبة
-          </button>
-
-          <button style={backButton} onClick={() => setPhase("range")}>
-            رجوع
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* =========================
-     شاشة تمرير الجوال في الجماعي
-  ========================= */
-
-  if (phase === "passPhone") {
-    return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <div style={rightTextStyle}>
-            <p style={textStyle}>مرر الجوال إلى</p>
-
-            <div style={playerNameStyle} dir="auto">
-              {currentPlayerName}
-            </div>
-          </div>
-
-          <p style={textStyle}>
-            لا تبدأ المحاولة إلا عندما يكون الجوال مع اللاعب الصحيح.
-          </p>
-
-          <button style={mainButton} onClick={startPlayerTurn}>
-            هذا أنا، ابدأ
-          </button>
-
-          <button style={dangerButton} onClick={withdrawCurrentPlayer}>
-            انسحاب اللاعب
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* =========================
-     شاشة اللعب
-  ========================= */
-
-  if (phase === "playing") {
-    return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          {mode === "group" && (
-            <div style={turnBoxStyle}>
+      <>
+        <Helmet>
+          <title>الأرقام الذهبية - حدد المدى | ونسنا</title>
+          <meta name="description" content="حدد مدى الأرقام الذي سيبحث فيه النظام عن الأرقام الذهبية السرية." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>اختاري مدى الأرقام</h2>
+            <p style={textStyle}>
+              حددي بداية ونهاية الأرقام التي سيختار منها النظام الأرقام الذهبية.
+            </p>
+            <div style={rangeRowStyle}>
               <div>
-                <p style={smallLabelStyle}>دور اللاعب</p>
-                <h2 dir="auto" style={nameTitleStyle}>
-                  {currentPlayerName}
-                </h2>
+                <label style={labelStyle}>إلى</label>
+                <input
+                  style={inputStyle}
+                  value={maxInput}
+                  onChange={(e) => setMaxInput(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>من</label>
+                <input
+                  style={inputStyle}
+                  value={minInput}
+                  onChange={(e) => setMinInput(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="1"
+                />
               </div>
             </div>
-          )}
-
-          <p style={textStyle}>
-            اكتبي 4 أرقام من {rangeMin} إلى {rangeMax}
-          </p>
-
-          <div style={codeBoxContainerStyle}>
-            {guessBoxes.map((value, index) => (
-              <input
-                key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
-                style={codeInputStyle}
-                value={value}
-                onChange={(e) => handleBoxChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                inputMode="numeric"
-                enterKeyHint={index < NUMBER_COUNT - 1 ? "next" : "done"}
-                placeholder="؟"
-              />
-            ))}
-          </div>
-
-          <button style={mainButton} onClick={submitGuess}>
-            تثبيت التخمين
-          </button>
-
-          {lastMessage && <div style={resultMessageStyle}>{lastMessage}</div>}
-
-          <div style={attemptsBoxStyle}>
-            <h3 style={attemptsTitleStyle}>سجل المحاولات</h3>
-
-            {attempts.length === 0 ? (
-              <p style={smallTextStyle}>لا توجد محاولات بعد</p>
-            ) : (
-              attempts.map((attempt) => (
-                <div key={attempt.number} style={attemptItemStyle}>
-                  <div style={{ width: "100%" }}>
-                    <div style={attemptNumberStyle}>
-                      محاولة {attempt.number}
-                    </div>
-
-                    <div style={attemptIconStyle}>
-                      {getResultIcon(attempt.goldenCount, attempt.type)}
-                    </div>
-
-                    {mode === "group" && (
-                      <div dir="auto" style={attemptPlayerStyle}>
-                        {attempt.player}
-                      </div>
-                    )}
-
-                    <div style={attemptMessageStyle}>{attempt.message}</div>
-                  </div>
-                </div>
-              ))
+            <button style={mainButton} onClick={startGame}>
+              بداية اللعبة
+            </button>
+            {mode === "solo" && (
+              <button
+                style={secondaryButton}
+                onClick={() => setPhase("explain")}
+              >
+                شرح اللعبة
+              </button>
             )}
+            <button style={backButton} onClick={resetGame}>
+              اختيار نمط جديد
+            </button>
           </div>
+        </div>
+      </>
+    );
+  }
 
-          {mode === "group" ? (
+  // ============ شاشة الشرح ============
+  if (phase === "explain") {
+    return (
+      <>
+        <Helmet>
+          <title>شرح لعبة الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content="تعلم طريقة لعب الأرقام الذهبية: خمن 4 أرقام سرية يعطيك النظام عدد الأرقام الصحيحة كل مرة." />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>طريقة اللعب</h2>
+            <div style={explainBoxStyle}>
+              <p>النظام يختار 4 أرقام ذهبية سرية من المدى الذي تم تحديده</p>
+              <p>اكتب 4 أرقام في المربعات</p>
+              <p>بعد كل محاولة سيخبرك النظام كم رقمًا ذهبيًا اكتشفت</p>
+              <p>الترتيب لا يهم، المهم معرفة الأرقام الأربعة</p>
+              <p>كل محاولة تُحفظ بالأسفل بدون عرض الأرقام</p>
+            </div>
+            <button style={mainButton} onClick={startGame}>
+              بداية اللعبة
+            </button>
+            <button style={backButton} onClick={() => setPhase("range")}>
+              رجوع
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ============ شاشة تمرير الجوال ============
+  if (phase === "passPhone") {
+    return (
+      <>
+        <Helmet>
+          <title>دور {currentPlayerName} - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content={`مرر الجوال إلى ${currentPlayerName}. حان دوره لتخمين الأرقام الذهبية.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <div style={rightTextStyle}>
+              <p style={textStyle}>مرر الجوال إلى</p>
+              <div style={playerNameStyle} dir="auto">
+                {currentPlayerName}
+              </div>
+            </div>
+            <p style={textStyle}>
+              لا تبدأ المحاولة إلا عندما يكون الجوال مع اللاعب الصحيح.
+            </p>
+            <button style={mainButton} onClick={startPlayerTurn}>
+              هذا أنا، ابدأ
+            </button>
             <button style={dangerButton} onClick={withdrawCurrentPlayer}>
               انسحاب اللاعب
             </button>
-          ) : (
-            <button style={dangerButton} onClick={revealAndEnd}>
-              انسحاب وكشف الأرقام
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
             </button>
-          )}
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  /* =========================
-     شاشة نتيجة محاولة الجماعي
-  ========================= */
+  // ============ شاشة اللعب ============
+  if (phase === "playing") {
+    return (
+      <>
+        <Helmet>
+          <title>العب الآن - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content={`${mode === "group" ? currentPlayerName + " - " : ""}خمن 4 أرقام بين ${rangeMin} و ${rangeMax}.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            {mode === "group" && (
+              <div style={turnBoxStyle}>
+                <div>
+                  <p style={smallLabelStyle}>دور اللاعب</p>
+                  <h2 dir="auto" style={nameTitleStyle}>
+                    {currentPlayerName}
+                  </h2>
+                </div>
+              </div>
+            )}
 
+            <p style={textStyle}>
+              اكتبي 4 أرقام من {rangeMin} إلى {rangeMax}
+            </p>
+
+            <div style={codeBoxContainerStyle}>
+              {guessBoxes.map((value, index) => (
+                <input
+                  key={index}
+                  ref={(el) => (inputRefs.current[index] = el)}
+                  style={codeInputStyle}
+                  value={value}
+                  onChange={(e) => handleBoxChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  inputMode="numeric"
+                  enterKeyHint={index < NUMBER_COUNT - 1 ? "next" : "done"}
+                  placeholder="؟"
+                />
+              ))}
+            </div>
+
+            <button style={mainButton} onClick={submitGuess}>
+              تثبيت التخمين
+            </button>
+
+            {lastMessage && <div style={resultMessageStyle}>{lastMessage}</div>}
+
+            <div style={attemptsBoxStyle}>
+              <h3 style={attemptsTitleStyle}>سجل المحاولات</h3>
+              {attempts.length === 0 ? (
+                <p style={smallTextStyle}>لا توجد محاولات بعد</p>
+              ) : (
+                attempts.map((attempt) => (
+                  <div key={attempt.number} style={attemptItemStyle}>
+                    <div style={{ width: "100%" }}>
+                      <div style={attemptNumberStyle}>
+                        محاولة {attempt.number}
+                      </div>
+                      <div style={attemptIconStyle}>
+                        {getResultIcon(attempt.goldenCount, attempt.type)}
+                      </div>
+                      {mode === "group" && (
+                        <div dir="auto" style={attemptPlayerStyle}>
+                          {attempt.player}
+                        </div>
+                      )}
+                      <div style={attemptMessageStyle}>{attempt.message}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {mode === "group" ? (
+              <button style={dangerButton} onClick={withdrawCurrentPlayer}>
+                انسحاب اللاعب
+              </button>
+            ) : (
+              <button style={dangerButton} onClick={revealAndEnd}>
+                انسحاب وكشف الأرقام
+              </button>
+            )}
+
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ============ شاشة نتيجة محاولة الجماعي ============
   if (phase === "turnResult") {
     const lastAttempt = attempts[attempts.length - 1];
-
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>نتيجة المحاولة</h2>
-
-          <div style={rightTextStyle}>
-            <p style={textStyle}>صاحب المحاولة</p>
-
-            <h2 dir="auto" style={nameTitleStyle}>
-              {lastAttempt?.player}
-            </h2>
+      <>
+        <Helmet>
+          <title>نتيجة المحاولة - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content={`${lastAttempt?.player}: ${lastAttempt?.message}`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>نتيجة المحاولة</h2>
+            <div style={rightTextStyle}>
+              <p style={textStyle}>صاحب المحاولة</p>
+              <h2 dir="auto" style={nameTitleStyle}>
+                {lastAttempt?.player}
+              </h2>
+            </div>
+            <div style={guessVisibleStyle}>
+              {lastAttempt?.guess.join(" - ")}
+            </div>
+            <div style={resultMessageStyle}>{lastAttempt?.message}</div>
+            <button style={secondaryButton} onClick={speakAttemptResult}>
+              🔊 أعلن النتيجة
+            </button>
+            <button style={mainButton} onClick={moveToNextPlayer}>
+              اللاعب التالي
+            </button>
+            <button style={dangerButton} onClick={withdrawCurrentPlayer}>
+              انسحاب اللاعب
+            </button>
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
           </div>
-
-          <div style={guessVisibleStyle}>
-            {lastAttempt?.guess.join(" - ")}
-          </div>
-
-          <div style={resultMessageStyle}>{lastAttempt?.message}</div>
-
-          <button style={secondaryButton} onClick={speakAttemptResult}>
-            🔊 أعلن النتيجة
-          </button>
-
-          <button style={mainButton} onClick={moveToNextPlayer}>
-            اللاعب التالي
-          </button>
-
-          <button style={dangerButton} onClick={withdrawCurrentPlayer}>
-            انسحاب اللاعب
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
-  /* =========================
-     شاشة انسحاب لاعب في الجماعي
-  ========================= */
-
+  // ============ شاشة انسحاب لاعب ============
   if (phase === "playerWithdraw") {
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>انسحب اللاعب</h2>
-
-          <div style={rightTextStyle}>
-            <p style={textStyle}>اللاعب المنسحب</p>
-
-            <h2 dir="auto" style={nameTitleStyle}>
-              {withdrawnPlayerName}
-            </h2>
+      <>
+        <Helmet>
+          <title>انسحب {withdrawnPlayerName} - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content={`${withdrawnPlayerName} انسحب. واصل مع باقي اللاعبين.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>انسحب اللاعب</h2>
+            <div style={rightTextStyle}>
+              <p style={textStyle}>اللاعب المنسحب</p>
+              <h2 dir="auto" style={nameTitleStyle}>
+                {withdrawnPlayerName}
+              </h2>
+            </div>
+            <p style={textStyle}>الأرقام الذهبية الصحيحة:</p>
+            <div style={secretNumbersStyle}>
+              {secretNumbers.join(" - ")}
+            </div>
+            <button style={mainButton} onClick={continueAfterWithdraw}>
+              متابعة مع باقي اللاعبين
+            </button>
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
           </div>
-
-          <p style={textStyle}>الأرقام الذهبية الصحيحة:</p>
-
-          <div style={secretNumbersStyle}>
-            {secretNumbers.join(" - ")}
-          </div>
-
-          <button style={mainButton} onClick={continueAfterWithdraw}>
-            متابعة مع باقي اللاعبين
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
-  /* =========================
-     شاشة الفوز
-  ========================= */
-
+  // ============ شاشة الفوز ============
   if (phase === "winner") {
     const winnerAttempt = attempts[attempts.length - 1];
-
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <div style={winnerIconStyle}>🏆</div>
-          <br />
-
-          <h2 style={titleStyle}>مبروكـ</h2>
-
-          {mode === "group" && (
-            <div>
-              <p style={textStyle}>الفائز</p>
-
-              <h2 dir="auto" style={nameTitleStyle}>
-                {winnerAttempt?.player}
-              </h2>
-              <br />
+      <>
+        <Helmet>
+          <title>🏆 فائز! - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content={`${mode === "group" ? winnerAttempt?.player + " " : ""}اكتشف الأرقام الذهبية في ${attempts.length} محاولات.`} />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <div style={winnerIconStyle}>🏆</div>
+            <br />
+            <h2 style={titleStyle}>مبروكـ</h2>
+            {mode === "group" && (
+              <div>
+                <p style={textStyle}>الفائز</p>
+                <h2 dir="auto" style={nameTitleStyle}>
+                  {winnerAttempt?.player}
+                </h2>
+                <br />
+              </div>
+            )}
+            <p style={textStyle}>لقد تم اكتشاف جميع الأرقام الذهبية</p>
+            <p style={textStyle}>الأرقام الذهبية الصحيحة</p>
+            <div style={secretNumbersStyle}>
+              {secretNumbers.join(" - ")}
             </div>
-          )}
-
-          <p style={textStyle}>لقد تم اكتشاف جميع الأرقام الذهبية</p>
-
-          <p style={textStyle}>الأرقام الذهبية الصحيحة</p>
-
-          <div style={secretNumbersStyle}>
-            {secretNumbers.join(" - ")}
+            <div style={summaryBoxStyle}>
+              <p>عدد المحاولات: {attempts.length}</p>
+              <p>الوقت: {formatTime(seconds)}</p>
+            </div>
+            <button style={share} onClick={shareGame}>
+              أعجبتني اللعبة، أود مشاركتها
+            </button>
+            <button style={secondaryButton} onClick={restartSameRange}>
+              أعد اللعبة بنفس المدى
+            </button>
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
           </div>
-
-          <div style={summaryBoxStyle}>
-            <p>عدد المحاولات: {attempts.length}</p>
-            <p>الوقت: {formatTime(seconds)}</p>
-          </div>
-
-          <button style={share} onClick={shareGame}>
-            أعجبتني اللعبة، أود مشاركتها
-          </button>
-
-          <button style={secondaryButton} onClick={restartSameRange}>
-            أعد اللعبة بنفس المدى
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
-  /* =========================
-     شاشة كشف الأرقام النهائي
-  ========================= */
-
+  // ============ شاشة كشف الأرقام ============
   if (phase === "giveup") {
     return (
-      <div style={pageStyle}>
-        <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
-
-        <div style={cardStyle}>
-          <h2 style={titleStyle}>تم كشف الأرقام</h2>
-
-          <p style={textStyle}>الأرقام الذهبية الصحيحة</p>
-
-          <div style={secretNumbersStyle}>
-            {secretNumbers.join(" - ")}
+      <>
+        <Helmet>
+          <title>كشف الأرقام - الأرقام الذهبية | ونسنا</title>
+          <meta name="description" content="تم كشف الأرقام الذهبية. حاول مرة أخرى!" />
+          <link rel="canonical" href="https://wansna.vercel.app/play/golden-numbers" />
+        </Helmet>
+        <div style={pageStyle}>
+          <h1 style={headerStyle}>🔒 الأرقام الذهبية</h1>
+          <div style={cardStyle}>
+            <h2 style={titleStyle}>تم كشف الأرقام</h2>
+            <p style={textStyle}>الأرقام الذهبية الصحيحة</p>
+            <div style={secretNumbersStyle}>
+              {secretNumbers.join(" - ")}
+            </div>
+            <div style={summaryBoxStyle}>
+              <p>عدد المحاولات: {attempts.length}</p>
+              <p>الوقت: {formatTime(seconds)}</p>
+            </div>
+            <button style={secondaryButton} onClick={restartSameRange}>
+              أعد اللعبة بنفس المدى
+            </button>
+            <button style={backButton} onClick={() => navigate("/games")}>
+              رجوع للألعاب
+            </button>
           </div>
-
-          <div style={summaryBoxStyle}>
-            <p>عدد المحاولات: {attempts.length}</p>
-            <p>الوقت: {formatTime(seconds)}</p>
-          </div>
-
-          <button style={secondaryButton} onClick={restartSameRange}>
-            أعد اللعبة بنفس المدى
-          </button>
-
-          <button style={backButton} onClick={() => navigate("/games")}>
-            رجوع للألعاب
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
+  // افتراضي (لا يحدث)
   return null;
 }
 

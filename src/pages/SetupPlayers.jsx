@@ -5,6 +5,9 @@ import { useState } from "react";
 // ونستورد useParams لمعرفة اللعبة الحالية من الرابط
 import { useNavigate, useParams } from "react-router-dom";
 
+// نستورد أداة تحسين SEO
+import { Helmet } from "react-helmet-async";
+
 // صفحة إعداد اللاعبين
 export default function SetupPlayers() {
   // نقرأ معرف اللعبة من الرابط
@@ -37,6 +40,48 @@ export default function SetupPlayers() {
       "تدعم اللعبة حتى 12 لاعباً. عند البداية يحصل كل لاعب على لون خاص به ويجب عليه حفظه جيداً. يتم تحديد عدد الجولات قبل بدء اللعب. في كل جولة يُطلب إحضار شيء بسرعة، وعلى اللاعبين الإسراع لإحضاره ثم العودة إلى الجوال والضغط على لونهم. أول لاعب يضغط على لونه يفوز بالجولة. إذا ضغط لاعب على لون لاعب آخر تُحتسب الجولة مباشرة لصاحب ذلك اللون، لذلك تحتاج اللعبة إلى السرعة والتركيز وحفظ لونك جيداً. في النهاية يتم جمع نتائج جميع الجولات وإعلان اللاعب الأكثر فوزاً بالجولات بطلاً للعبة.",
     "golden-numbers":
       "يختار اللاعبون نمط اللعب فردياً أو جماعياً، ثم يتم تحديد مدى الأرقام. يختار النظام 4 أرقام ذهبية سرية من هذا المدى، وعلى اللاعبين محاولة اكتشافها. بعد كل محاولة يخبرك النظام بعدد الأرقام الذهبية التي تم اكتشافها دون الكشف عنها. استمر في التخمين والاستنتاج حتى تصل إلى جميع الأرقام الذهبية. في النمط الجماعي يتناوب اللاعبون على المحاولات، والفائز هو أول من يكتشف الأرقام الذهبية كاملة."
+  };
+
+  // بيانات SEO لكل لعبة
+  const seoData = {
+    "who-said": {
+      title: "إعداد لعبة من قالها؟ | ونسنا",
+      description: "جهز لاعبيك وابدأ لعبة من قالها؟ - لعبة تخمين العبارات المضحكة. اكتبوا عبارات وخمنوا مين قالها!",
+      ogTitle: "إعداد لعبة من قالها؟ | ونسنا",
+      ogDescription: "لعبة تخمين العبارات الجماعية - جهز لاعبيك وابدأ التحدي!"
+    },
+    "forbidden-word": {
+      title: "إعداد لعبة الكلمة الممنوعة | ونسنا",
+      description: "جهز لاعبيك وابدأ لعبة الكلمة الممنوعة - لعبة الذكاء وسرعة البديهة. استدرج صاحبك يقول الكلمة!",
+      ogTitle: "إعداد لعبة الكلمة الممنوعة | ونسنا",
+      ogDescription: "لعبة الكلمة الممنوعة - استدرج صاحبك يقول الكلمة بدون ما يكتشفها!"
+    },
+    "know-me": {
+      title: "إعداد لعبة من يعرفني أكثر؟ | ونسنا",
+      description: "جهز لاعبيك وابدأ لعبة من يعرفني أكثر؟ - اختبر مين يعرفك فعلًا بين أصحابك!",
+      ogTitle: "إعداد لعبة من يعرفني أكثر؟ | ونسنا",
+      ogDescription: "لعبة من يعرفني أكثر؟ - اكتشف مين يعرفك أكثر بين أصحابك!"
+    },
+    "bring-it-fast": {
+      title: "إعداد لعبة جيبها بسرعة | ونسنا",
+      description: "جهز لاعبيك وابدأ لعبة جيبها بسرعة - لعبة السرعة والتركيز. جيب الشيء المطلوب بسرعة واضغط على لونك!",
+      ogTitle: "إعداد لعبة جيبها بسرعة | ونسنا",
+      ogDescription: "لعبة جيبها بسرعة - أول من يضغط على لونه يفوز بالجولة!"
+    },
+    "golden-numbers": {
+      title: "إعداد لعبة الأرقام الذهبية | ونسنا",
+      description: "جهز لاعبيك وابدأ لعبة الأرقام الذهبية - لعبة الذكاء والاستنتاج. اكتشف الأرقام الذهبية بأقل عدد من المحاولات!",
+      ogTitle: "إعداد لعبة الأرقام الذهبية | ونسنا",
+      ogDescription: "لعبة الأرقام الذهبية - اكتشف الأرقام السرية بأقل عدد من المحاولات!"
+    }
+  };
+
+  // بيانات SEO الحالية حسب gameId
+  const currentSeo = seoData[gameId] || {
+    title: "إعداد اللاعبين | ونسنا",
+    description: "جهز لاعبيك وابدأ اللعب على ونسنا - ألعاب جماعية ممتعة",
+    ogTitle: "إعداد اللاعبين | ونسنا",
+    ogDescription: "جهز لاعبيك وابدأ اللعب على ونسنا"
   };
 
   // اللاعبين الحاليين في هذه الجولة
@@ -131,108 +176,121 @@ export default function SetupPlayers() {
   }
 
   return (
-    <div style={pageStyle}>
-      {/* عنوان اللعبة */}
-      <h1 style={mainTitleStyle}>
-        {gameNames[gameId]}
-      </h1>
+    <>
+      {/* منطقة تحسين محركات البحث - ديناميكية حسب اللعبة */}
+      <Helmet>
+        <title>{currentSeo.title}</title>
+        <meta name="description" content={currentSeo.description} />
+        <link rel="canonical" href={`https://wansna.vercel.app/play/${gameId}/setup`} />
+        <meta property="og:title" content={currentSeo.ogTitle} />
+        <meta property="og:description" content={currentSeo.ogDescription} />
+        <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
+        <meta property="og:url" content={`https://wansna.vercel.app/play/${gameId}/setup`} />
+      </Helmet>
 
-      {/* كرت إعداد اللاعبين */}
-      <div style={cardStyle}>
-        {/* عنوان الكرت */}
-        <h2 style={cardTitleStyle}>
-          من بيلعب معك؟ 👥
-        </h2>
+      <div style={pageStyle}>
+        {/* عنوان اللعبة */}
+        <h1 style={mainTitleStyle}>
+          {gameNames[gameId]}
+        </h1>
 
-        {/* حقول اللاعبين */}
-        {players.map((player, index) => (
-          <div key={index} style={playerRowStyle}>
-            <input
-              type="text"
-              placeholder={`اسم اللاعب ${index + 1}`}
-              value={player}
-              onChange={(e) => updatePlayer(index, e.target.value)}
-              style={inputStyle}
-            />
+        {/* كرت إعداد اللاعبين */}
+        <div style={cardStyle}>
+          {/* عنوان الكرت */}
+          <h2 style={cardTitleStyle}>
+            من بيلعب معك؟ 👥
+          </h2>
 
-            <button
-              onClick={() => removePlayer(index)}
-              style={deletePlayerButtonStyle}
-            >
-              حذف
-            </button>
-          </div>
-        ))}
+          {/* حقول اللاعبين */}
+          {players.map((player, index) => (
+            <div key={index} style={playerRowStyle}>
+              <input
+                type="text"
+                placeholder={`اسم اللاعب ${index + 1}`}
+                value={player}
+                onChange={(e) => updatePlayer(index, e.target.value)}
+                style={inputStyle}
+              />
 
-        {/* زر إضافة لاعب */}
-        <button onClick={addPlayer} style={addPlayerButtonStyle}>
-          + إضافة لاعب
-        </button>
-
-        {/* شرح اللعبة */}
-        <div style={descriptionBoxStyle}>
-          <div style={descriptionTitleStyle}>
-            شرح اللعبة 📖
-          </div>
-
-          <div style={descriptionTextStyle}>
-            {gameDescriptions[gameId]}
-          </div>
-        </div>
-
-        {/* زر بدء الجولة */}
-        <button onClick={startGame} style={startButtonStyle}>
-          ابدأ الجولة 🎮
-        </button>
-
-        {/* الجمعات السابقة */}
-        {savedGroups.length > 0 && (
-          <div style={{ marginTop: "28px" }}>
-            <h3>الجمعات السابقة</h3>
-
-            {savedGroups.map((group) => (
-              <div
-                key={group.id}
-                style={{
-                  ...savedGroupCardStyle,
-                  opacity: deletingGroupId === group.id ? 0 : 1,
-                  transform:
-                    deletingGroupId === group.id
-                      ? "translateX(40px)"
-                      : "translateX(0)"
-                }}
+              <button
+                onClick={() => removePlayer(index)}
+                style={deletePlayerButtonStyle}
               >
-                <strong>جمعة {group.date}</strong>
+                حذف
+              </button>
+            </div>
+          ))}
 
-                <p style={savedGroupPlayersStyle}>
-                  {group.players.join(" - ")}
-                </p>
+          {/* زر إضافة لاعب */}
+          <button onClick={addPlayer} style={addPlayerButtonStyle}>
+            + إضافة لاعب
+          </button>
 
-                <div style={savedGroupButtonsStyle}>
-                  <button
-                    onClick={() => selectSavedGroup(group)}
-                    style={useGroupButtonStyle}
-                  >
-                    استخدام
-                  </button>
+          {/* شرح اللعبة */}
+          <div style={descriptionBoxStyle}>
+            <div style={descriptionTitleStyle}>
+              شرح اللعبة 📖
+            </div>
 
-                  <button
-                    onClick={() => deleteGroup(group.id)}
-                    style={deleteGroupButtonStyle}
-                  >
-                    حذف الجمعة
-                  </button>
-                </div>
-              </div>
-            ))}
+            <div style={descriptionTextStyle}>
+              {gameDescriptions[gameId]}
+            </div>
           </div>
-        )}
 
-        <button style={backButtonStyle} onClick={() => navigate("/games")}>
-          رجوع للألعاب
-        </button>
+          {/* زر بدء الجولة */}
+          <button onClick={startGame} style={startButtonStyle}>
+            ابدأ الجولة 🎮
+          </button>
+
+          {/* الجمعات السابقة */}
+          {savedGroups.length > 0 && (
+            <div style={{ marginTop: "28px" }}>
+              <h3>الجمعات السابقة</h3>
+
+              {savedGroups.map((group) => (
+                <div
+                  key={group.id}
+                  style={{
+                    ...savedGroupCardStyle,
+                    opacity: deletingGroupId === group.id ? 0 : 1,
+                    transform:
+                      deletingGroupId === group.id
+                        ? "translateX(40px)"
+                        : "translateX(0)"
+                  }}
+                >
+                  <strong>جمعة {group.date}</strong>
+
+                  <p style={savedGroupPlayersStyle}>
+                    {group.players.join(" - ")}
+                  </p>
+
+                  <div style={savedGroupButtonsStyle}>
+                    <button
+                      onClick={() => selectSavedGroup(group)}
+                      style={useGroupButtonStyle}
+                    >
+                      استخدام
+                    </button>
+
+                    <button
+                      onClick={() => deleteGroup(group.id)}
+                      style={deleteGroupButtonStyle}
+                    >
+                      حذف الجمعة
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button style={backButtonStyle} onClick={() => navigate("/games")}>
+            رجوع للألعاب
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

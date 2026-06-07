@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://wansna.vercel.app/sitemap.xml

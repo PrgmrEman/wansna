@@ -44,13 +44,46 @@ export default function Support() {
   /**
    * تحمّل صورة الباركود QR للمستخدم.
    */
-  function downloadQR() {
-    const link = document.createElement("a");
-    link.href = "/qr.jpeg";
-    link.download = "Wansna-QR.jpeg";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  async function downloadQR() {
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // لتجنب مشاكل CORS (اختياري لكن مفيد)
+
+      img.onload = () => {
+        // إنشاء canvas بنفس أبعاد الصورة
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        // تحويل canvas إلى blob بصيغة JPEG
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            alert("تعذر تجهيز الصورة للتحميل");
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "Wansna-QR.jpeg";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, "image/jpeg", 0.9); // الجودة 90%
+      };
+
+      img.onerror = () => {
+        alert("لم يتم العثور على صورة الباركود");
+      };
+
+      // تحميل الصورة الأصلية
+      img.src = "/qr.jpeg";
+    } catch (error) {
+      console.error("فشل التحميل:", error);
+      alert("تعذر تحميل الباركود، تأكد من اتصالك بالإنترنت");
+    }
   }
 
   /**

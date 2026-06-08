@@ -191,8 +191,7 @@ export default function About() {
           <p style={introTextStyle}>
             ونسنّا منصة ألعاب جماعية عربية صُممت لتُضيف المتعة والتفاعل إلى
             الجلسات العائليةأو جلسات الأصدقاء، من جهاز واحد وبدون الحاجة إلى
-            تحميل أي تطبيق.
-          </p>
+            تحميل أي تطبيق          </p>
 
           {/* ========================
               بطاقة من أنا؟
@@ -288,7 +287,7 @@ export default function About() {
                 )}
 
                 {status === "error" && (
-                  <p style={errorTextStyle}>❌ حدث خطأ، حاولي مرة أخرى</p>
+                  <p style={errorTextStyle}>❌ حدث خطأ، حاول مرة أخرى</p>
                 )}
               </form>
             </div>

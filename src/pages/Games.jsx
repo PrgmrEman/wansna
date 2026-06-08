@@ -289,7 +289,7 @@ export default function Games() {
                   marginTop: "8px"
                 }}
               >
-              👩🏻‍💻 تعرف على قصة ونسنّنا 
+               تعرف على ونسنّا 
               </div>
             </div>
           </div>

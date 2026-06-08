@@ -1,3 +1,4 @@
+
 // نستورد أداة التنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
 // نستورد أداة تحسين SEO
@@ -47,9 +48,12 @@ export default function Home() {
         <img
           src="/logo.png"
           alt="شعار ونسنا - خلّ الجو يونس"
+          
+          
           style={{
             width: "min(70vw, 320px)",
             marginBottom: "32px",
+            
           }}
         />
 

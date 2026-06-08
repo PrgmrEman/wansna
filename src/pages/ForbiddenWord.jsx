@@ -307,7 +307,12 @@ export default function ForbiddenWord() {
   ========================= */
 
   function createRounds(categoryKey) {
-    prepareAudio();
+    // تجهيز الصوت بأمان (حتى لو فشل لا يوقف اللعبة)
+    try {
+      prepareAudio();
+    } catch (e) {
+      // لو الصوت ما اشتغل، اللعبة تكمل عادي
+    }
 
     const words = categories[categoryKey].words;
     const newRounds = buildRounds(players, words);
@@ -802,7 +807,7 @@ const cardStyle = {
   padding: "28px",
   borderRadius: "32px",
   textAlign: "center",
-  boxShadow: "0 8px 20px rgba(190, 182, 182, 0.35)"
+  boxShadow: "0 8px 20px rgba(0,0,0,0.1)" // تم إصلاحها
 };
 
 const titleStyle = {

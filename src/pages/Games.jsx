@@ -221,16 +221,16 @@ export default function Games() {
             </div>
           ))}
 
-          {/* بطاقة الدعم */}
+          {/* بطاقة عن ونسنا */}
           <div
-            onClick={() => navigate("/support")}
+            onClick={() => navigate("/about")}
             role="button"
             tabIndex={0}
-            aria-label="الذهاب إلى صفحة الدعم"
+            aria-label="الذهاب إلى صفحة عن ونسنا"
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                navigate("/support");
+                navigate("/about");;
               }
             }}
             style={{
@@ -246,7 +246,7 @@ export default function Games() {
               marginBottom: "20px",
             }}
           >
-            {/* أيقونة الدعم */}
+            {/* أيقونة عن ونسنا */}
             <div
               style={{
                 width: "80px",
@@ -263,14 +263,14 @@ export default function Games() {
               ❤️
             </div>
 
-            {/* نص الدعم */}
+            {/* نص عن ونسنا */}
             <div
               style={{
                 textAlign: "right",
                 flex: 1
               }}
             >
-              {/* عنوان الدعم */}
+              {/*  عن ونسنا  */}
               <div
                 style={{
                   fontSize: "30px",
@@ -278,10 +278,10 @@ export default function Games() {
                   color: "#444"
                 }}
               >
-                ادعم ونسنّا
+                عن ونسنّا
               </div>
 
-              {/* وصف الدعم */}
+              {/* وصف عن ونسنا */}
               <div
                 style={{
                   fontSize: "16px",
@@ -289,7 +289,7 @@ export default function Games() {
                   marginTop: "8px"
                 }}
               >
-                بدعمك نقدر نطور أكثر 🚀
+              👩🏻‍💻 تعرف على قصة ونسنّنا 
               </div>
             </div>
           </div>

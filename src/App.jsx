@@ -9,9 +9,9 @@ import SetupPlayers from "./pages/SetupPlayers";
 import WhoSaid from "./pages/WhoSaid";
 import KnowMe from "./pages/KnowMe";
 import ForbiddenWord from "./pages/ForbiddenWord";
-import Support from "./pages/Support";
 import BringItFast from "./pages/BringItFast";
 import GoldenNumbers from "./pages/GoldenNumbers";
+import About from "./pages/About";
 
 
 
@@ -48,10 +48,9 @@ export default function App() {
       <Route path="/play/golden-numbers" element={<GoldenNumbers />} />
 
 
-      {/* صفحة الدعم */}
 
-      <Route path="/support" element={<Support />} />
-
+      {/* صفحة "عن ونسنّا" */}
+      <Route path="/about" element={<About />} />
     </Routes>
   );
 }

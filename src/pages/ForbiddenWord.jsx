@@ -2,8 +2,6 @@
 import { useEffect, useState, useRef } from "react";
 // نستورد useNavigate للتنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
-// نستورد أداة تحسين SEO
-import { Helmet } from "react-helmet-async";
 
 // مدة الجولة: دقيقتان = 120 ثانية
 const ROUND_LIMIT = 120;
@@ -12,21 +10,16 @@ const ROUND_LIMIT = 120;
 let audioCtx = null;
 
 // ====== دوال الصوت ======
-
 // تجهيز AudioContext (يُستدعى عند أول تفاعل)
 function prepareAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    // تشغيل صوت صامت لتفعيل الإذن في المتصفح، خصوصًا الجوال
+    // تشغيل صوت صامت لتفعيل الإذن
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-
     gain.gain.value = 0;
-
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-
     osc.start(0);
     osc.stop(0.001);
   } else if (audioCtx.state === "suspended") {
@@ -34,68 +27,35 @@ function prepareAudio() {
   }
 }
 
-// تشغيل جرس ناعم
-function playSoftBell(volume = 0.15) {
+// تشغيل نغمة تنبيه قوية (عند نهاية الوقت)
+function playAlertBeep() {
   try {
     if (!audioCtx) return;
     if (audioCtx.state === "suspended") audioCtx.resume();
-
-    const now = audioCtx.currentTime;
-
-    const osc1 = audioCtx.createOscillator();
-    const gain1 = audioCtx.createGain();
-
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(880, now);
-
-    gain1.gain.setValueAtTime(0, now);
-    gain1.gain.linearRampToValueAtTime(volume, now + 0.04);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-
-    osc1.start(now);
-    osc1.stop(now + 0.8);
-
-    const osc2 = audioCtx.createOscillator();
-    const gain2 = audioCtx.createGain();
-
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(1320, now + 0.08);
-
-    gain2.gain.setValueAtTime(0, now + 0.08);
-    gain2.gain.linearRampToValueAtTime(volume * 0.6, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1);
-
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-
-    osc2.start(now + 0.08);
-    osc2.stop(now + 1);
-  } catch (e) {
-    console.warn("الصوت غير متاح:", e);
-  }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.4);
+  } catch (e) { console.error("Error playing alert beep:", e); }
 }
 
 // تشغيل نغمة خلفية هادئة مستمرة
 function startBackgroundTone() {
   if (!audioCtx) return;
   if (audioCtx.state === "suspended") audioCtx.resume();
-
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-
   osc.type = "sine";
   osc.frequency.value = 180;
-
-  gain.gain.value = 0.005;
-
+  gain.gain.value = 0.06;
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-
   osc.start();
-
   return { osc, gain };
 }
 
@@ -109,15 +69,12 @@ function getRandomIndex(length) {
 
 function shuffleArray(array) {
   const shuffled = [...array];
-
   for (let i = shuffled.length - 1; i > 0; i--) {
     const randomIndex = getRandomIndex(i + 1);
     const temp = shuffled[i];
-
     shuffled[i] = shuffled[randomIndex];
     shuffled[randomIndex] = temp;
   }
-
   return shuffled;
 }
 
@@ -128,11 +85,9 @@ function buildRounds(players, words) {
 
   return shuffledGuests.map((guest, index) => {
     let host = shuffledHosts[index];
-
     if (host === guest) {
       host = players.find((player) => player !== guest);
     }
-
     return {
       guest,
       host,
@@ -148,34 +103,9 @@ function buildRounds(players, words) {
 export default function ForbiddenWord() {
   const navigate = useNavigate();
 
-  // =========================
-  // مشاركة اللعبة
-  // =========================
-  async function shareGame() {
-    const gameUrl =
-      `${window.location.origin}/play/forbidden-word/setup`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "ونسنّا ⚡",
-          text: "جرب لعبة الكلمة الممنوعة في ونسنّا 🎮",
-          url: gameUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(gameUrl);
-        alert("تم نسخ رابط اللعبة ✅");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  // قراءة اللاعبين المحفوظين
   const savedPlayers = localStorage.getItem("current-players");
   const players = savedPlayers ? JSON.parse(savedPlayers) : [];
 
-  // ======== حالات اللعبة ========
   const [phase, setPhase] = useState("category");
   const [rounds, setRounds] = useState([]);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -186,73 +116,51 @@ export default function ForbiddenWord() {
   const [isRunning, setIsRunning] = useState(false);
   const [roundResults, setRoundResults] = useState([]);
 
+  const timerRef = useRef(null);
   const bgSoundRef = useRef(null);
 
   /* =========================
-      فئات الكلمات
+      فئات الكلمات (تمت إضافة كلمات جديدة)
   ========================= */
-
   const categories = {
     food: {
       title: "الأكل والمشروبات 🍔",
       words: [
         "قهوة", "بيتزا", "شاورما", "مطعم", "جوع", "عصير", "حلى", "سبايسي",
-        "سناك", "فطور", "بيض", "ورق عنب", "غداء", "كبه", "عشاء", "مطبخ",
-        "سفرة", "مقبلات", "مشروب غازي", "شوكلاته", "فواكه", "خضار", "لحم",
-        "سمك", "دجاج", "مندي", "كبسه", "مقلقل", "جبن", "برياني", "فلافل",
-        "حمص", "تبوله", "كشري", "رز", "معكرونة", "سوشي", "رامن", "كريب",
-        "وافل", "آيس كريم", "بسكويت", "كعك", "فطيرة", "مربى", "رجيم",
-        "زبدة", "قشطة", "لبن", "زبادي", "كاسترد", "مخلل", "سجق", "برجر",
-        "هامبرغر", "ملوخية", "فتوش", "كفتة", "كباب", "شوربة", "سلطة",
-        "عصير طبيعي", "ماء", "شاي"
+        "كبسة", "فول", "تميس", "كنافة", "كبة", "فلافل", "حمص", "تبولة",
+        "مانجا", "فراولة", "موز", "برتقال", "ليمون", "لبن", "جبن", "عسل"
       ]
     },
-
     feelings: {
       title: "العلاقات والمشاعر 💔",
       words: [
         "حب", "زواج", "غيرة", "بلوك", "كراش", "زعل", "صداقة", "إعجاب",
-        "خيانة", "موعد", "حنين", "اشتياق", "تواصل", "تعارف", "هدية",
-        "ارتباط", "طلاق", "تفاهم", "وفاء", "خجل", "ثقة", "احترام", "تقدير",
-        "حنان", "شوق", "عاطفة", "تعلق", "تسامح", "تضحية", "عيد زواج",
-        "كراهية", "خطوبة", "اهتمام", "إهمال", "اعتراف"
+        "مواعدة", "هدية", "بوسة", "حضن", "فراق", "لقاء", "حنين", "وعد",
+        "عتاب", "صلح", "حبوبة", "حبيبي", "قلب", "روح", "عمري", "عيون"
       ]
     },
-
     tech: {
       title: "الألعاب والتقنية 🎮",
       words: [
-        "جوال", "شاحن", "تيك توك", "إنترنت", "تصوير", "لايف", "بلايستيشن",
-        "سماعة", "كمبيوتر", "لاب توب", "تلفزيون", "سوشيال ميديا", "يوتيوب",
-        "تويتر X", "فيسبوك", "إنستغرام", "تيمز", "زووم", "تطبيق", "موقع",
-        "برمجة", "هاك", "روبوت", "ذكاء اصطناعي", "واقع افتراضي", "بلوتوث",
-        "واي فاي", "سيلفي", "فيديو جيم", "بث مباشر", "تغريدة", "هاشتاق",
-        "فلتر", "إيموجي", "ميمز", "تحدي تيك توك", "تطبيق توصيل", "بودكاست",
-        "واتساب"
+        "جوال", "شاحن", "تيك توك", "إنترنت", "تصوير", "لايف", "بلايستيشن", "سماعة",
+        "سناب", "واتساب", "انستغرام", "فيس", "تابلت", "لابتوب", "واي فاي", "بلوتوث",
+        "شاشة", "كيبورد", "ماوس", "قرص", "ذاكرة", "بطارية", "سيلفي", "فلتر"
       ]
     },
-
     daily: {
       title: "الحياة اليومية 🏫",
       words: [
         "دوام", "نوم", "تأخير", "اختبار", "مدرسة", "جامعة", "واجب", "مشوار",
-        "زحمة", "مواصلات", "سوق", "مطبخ", "ممطر", "مشمس", "تسوق", "عزيمة",
-        "استيقاظ", "استحمام", "مواعيد", "عمل منزلي", "مكتب", "اجتماع", "تقويم",
-        "تخطيط يومي", "صباح", "ليل", "استراحة", "تعب", "نشاط", "رياضة",
-        "تمرين", "إجازة", "انتظار", "روتين", "سهره", "راتب", "مصعد", "حر",
-        "برد", "ساعة"
+        "مكيف", "مصباح", "مفتاح", "باب", "شباك", "سجاد", "مخدة", "حرام",
+        "فطور", "غدا", "عشا", "دش", "مغسلة", "مراية", "ساعة", "جوال"
       ]
     },
-
     travel: {
       title: "السفر والترفيه ✈️",
       words: [
         "سفر", "مطار", "بحر", "فندق", "إجازة", "سيارة", "طلعة", "تصوير",
-        "تخييم", "رحلة", "شاطئ", "جبل", "منتجع", "تذكرة", "خريطة", "دليل سياحي",
-        "مغامرة", "استكشاف", "تذكرة طيران", "حقيبة سفر", "جواز سفر", "تأشيرة",
-        "رحلة بحرية", "سفاري", "تزلج", "متنزه", "متحف", "معالم سياحية", "كروز",
-        "رحلة برية", "تسلق جبال", "غوص", "غطس", "رحلة قطار", "سباحة ",
-        "تذكرة حفل", "مهرجان"
+        "شنطة", "تذكرة", "باسبور", "تأشيرة", "رحلة", "جزيرة", "شاطئ", "مسبح",
+        "خيمة", "شلال", "جبل", "سحاب", "غروب", "شمس", "قمر", "نجوم"
       ]
     }
   };
@@ -260,16 +168,13 @@ export default function ForbiddenWord() {
   /* =========================
       إدارة المؤقت
   ========================= */
-
   useEffect(() => {
     let timer;
-
     if (isRunning) {
       timer = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
     }
-
     return () => clearInterval(timer);
   }, [isRunning]);
 
@@ -277,28 +182,19 @@ export default function ForbiddenWord() {
     if (isRunning && seconds >= ROUND_LIMIT) {
       if (bgSoundRef.current) {
         const { osc, gain } = bgSoundRef.current;
-
-        try {
-          osc.stop();
-        } catch (e) {
-          console.warn("خطأ أثناء إيقاف صوت الخلفية:", e);
-        }
-
+        osc.stop();
         gain.disconnect();
         bgSoundRef.current = null;
       }
-
-      playSoftBell(0.22);
+      playAlertBeep();
       finishRound("timeup");
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seconds, isRunning]);
 
   function formatTime(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
-
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
 
@@ -307,16 +203,9 @@ export default function ForbiddenWord() {
   ========================= */
 
   function createRounds(categoryKey) {
-    // تجهيز الصوت بأمان (حتى لو فشل لا يوقف اللعبة)
-    try {
-      prepareAudio();
-    } catch (e) {
-      // لو الصوت ما اشتغل، اللعبة تكمل عادي
-    }
-
+    prepareAudio();
     const words = categories[categoryKey].words;
     const newRounds = buildRounds(players, words);
-
     setRounds(newRounds);
     setRoundIndex(0);
     setGuestPlayer(newRounds[0].guest);
@@ -330,11 +219,13 @@ export default function ForbiddenWord() {
 
   function startTimer() {
     prepareAudio();
-
-    if (!bgSoundRef.current) {
-      bgSoundRef.current = startBackgroundTone();
+    if (bgSoundRef.current) {
+      const { osc, gain } = bgSoundRef.current;
+      osc.stop();
+      gain.disconnect();
+      bgSoundRef.current = null;
     }
-
+    bgSoundRef.current = startBackgroundTone();
     setSeconds(0);
     setIsRunning(true);
     setPhase("playing");
@@ -343,17 +234,14 @@ export default function ForbiddenWord() {
   function finishRound(resultType) {
     if (bgSoundRef.current) {
       const { osc, gain } = bgSoundRef.current;
-
-      try {
-        osc.stop();
-      } catch (e) {
-        console.warn("خطأ أثناء إيقاف الصوت:", e);
-      }
-
+      try { osc.stop(); } catch (e) { console.error("Error stopping background tone:", e); }
       gain.disconnect();
       bgSoundRef.current = null;
     }
-
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsRunning(false);
 
     const result = {
@@ -363,21 +251,17 @@ export default function ForbiddenWord() {
       time: seconds,
       type: resultType
     };
-
     setRoundResults((prev) => [...prev, result]);
     setPhase("roundResult");
   }
 
   function nextRound() {
     const nextIndex = roundIndex + 1;
-
     if (nextIndex >= rounds.length) {
       setPhase("finalResults");
       return;
     }
-
     const nextRoundData = rounds[nextIndex];
-
     setRoundIndex(nextIndex);
     setGuestPlayer(nextRoundData.guest);
     setHostPlayer(nextRoundData.host);
@@ -390,388 +274,216 @@ export default function ForbiddenWord() {
   /* =========================
       حالة عدم وجود لاعبين
   ========================= */
-
   if (players.length === 0) {
     return (
-      <>
-        <Helmet>
-          <title>الكلمة الممنوعة | ونسنا - لعبة الذكاء والكلمات</title>
-          <meta name="description" content="لعبة الكلمة الممنوعة الجماعية: استدرج صاحبك يقول الكلمة بدون ما يكتشفها. لعبة ذكاء وسرعة بديهة على ونسنا." />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-          <meta property="og:title" content="الكلمة الممنوعة | ونسنا" />
-          <meta property="og:description" content="لعبة الكلمة الممنوعة - استدرج صاحبك يقول الكلمة!" />
-          <meta property="og:image" content="https://wansna.vercel.app/logo.png" />
-          <meta property="og:url" content="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h2>ما فيه لاعبين محفوظين</h2>
-            <button style={mainButton} onClick={() => navigate("/games")}>
-              رجوع للألعاب
-            </button>
-          </div>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h2>ما فيه لاعبين محفوظين</h2>
+          <button style={mainButton} onClick={() => navigate("/games")}>رجوع للألعاب</button>
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة اختيار الفئة
   ========================= */
-
   if (phase === "category") {
     return (
-      <>
-        <Helmet>
-          <title>الكلمة الممنوعة - اختر الموضوع | ونسنا</title>
-          <meta name="description" content="اختار موضوع لعبة الكلمة الممنوعة: الأكل والمشروبات، العلاقات والمشاعر، الألعاب والتقنية، الحياة اليومية، السفر والترفيه." />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h1 style={titleStyle}>كلمة ممنوعة 🤫</h1>
-            <p style={textStyle}>اختاروا موضوعاً للعبة</p>
-            <br />
-
-            {Object.entries(categories).map(([key, item]) => (
-              <button
-                key={key}
-                style={mainButton}
-                onClick={() => createRounds(key)}
-              >
-                {item.title}
-              </button>
-            ))}
-          </div>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>كلمة ممنوعة 🤫</h1>
+          <p style={textStyle}>اختاروا موضوع اللعبة</p>
+          {Object.entries(categories).map(([key, item]) => (
+            <button key={key} style={mainButton} onClick={() => createRounds(key)}>
+              {item.title}
+            </button>
+          ))}
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة مقدمة الجولة
   ========================= */
-
   if (phase === "roundIntro") {
     return (
-      <>
-        <Helmet>
-          <title>الكلمة الممنوعة - الجولة {roundIndex + 1} | ونسنا</title>
-          <meta name="description" content={`الجولة ${roundIndex + 1} من ${rounds.length}: المحاور ${hostPlayer} يحاول استدراج الضيف ${guestPlayer}.`} />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <p style={textStyle}>
-              الجولة {roundIndex + 1} من {rounds.length}
-            </p>
-
-            <h1 style={titleStyle}>الجولة بين</h1>
-
-            <div  style={roleCardStyle}>
-              <p  style={roleLabelStyle}>المحاور</p>
-              <h2 style={textH2} >{hostPlayer}</h2>
-            </div>
-
-            <div style={roleCardStyle}>
-              <p style={roleLabelStyle}>الضيف</p>
-              <h2 style={textH2}>{guestPlayer}</h2>
-            </div>
-
-            <p style={textStyle}>مرروا الجوال للمحاور</p>
-
-            <button style={mainButton} onClick={() => setPhase("hostBrief")}>
-              هذا أنا، ابدأ
-            </button>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <p style={textStyle}>الجولة {roundIndex + 1} من {rounds.length}</p>
+          <h1 style={titleStyle}>الجولة بين</h1>
+          <div style={roleCardStyle}>
+            <p style={roleLabelStyle}>المحاور</p>
+            <h2 dir="auto">{hostPlayer}</h2>
           </div>
+          <div style={roleCardStyle}>
+            <p style={roleLabelStyle}>الضيف</p>
+            <h2 dir="auto">{guestPlayer}</h2>
+          </div>
+          <p style={textStyle}>مرروا الجوال للمحاور</p>
+          <button style={mainButton} onClick={() => setPhase("hostBrief")}>هذا أنا، ابدأ</button>
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة تعليمات المحاور
   ========================= */
-
   if (phase === "hostBrief") {
     return (
-      <>
-        <Helmet>
-          <title>الكلمة الممنوعة - مهمة المحاور | ونسنا</title>
-          <meta name="description" content={`${hostPlayer} هو المحاور. الكلمة الممنوعة جاهزة. استدرج الضيف ليقولها!`} />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h2 style={titleStyle}>مهمتك 🎤</h2>
-
-            <p style={textStyle}>استدرج الضيف أن يقول الكلمة الممنوعة</p>
-
-            <div style={wordCardStyle}>
-              <p style={roleLabelStyle}>الكلمة الممنوعة</p>
-              <h1 style={forbiddenWordStyle}>{forbiddenWord}</h1>
-            </div>
-
-            <p style={textStyle}>عند بداية الحوار اضغط ابدأ. لديك دقيقتان.</p>
-
-            <div style={buttonsContainerStyle}>
-              <button style={greenButton} onClick={startTimer}>
-                <strong>ابدأ</strong>
-                <small>ابدأ احتساب وقت الحوار</small>
-              </button>
-            </div>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h2 style={titleStyle}>مهمتك 🎤</h2>
+          <p style={textStyle}>استدرج الضيف أن يقول الكلمة الممنوعة</p>
+          <div style={wordCardStyle}>
+            <p style={roleLabelStyle}>الكلمة الممنوعة</p>
+            <h1 style={forbiddenWordStyle}>{forbiddenWord}</h1>
+          </div>
+          <p style={textStyle}>عند بداية الحوار اضغط ابدأ. لديك دقيقتان.</p>
+          <div style={buttonsContainerStyle}>
+            <button style={greenButton} onClick={startTimer}>
+              <strong>ابدأ</strong>
+              <small>ابدأ احتساب وقت الحوار</small>
+            </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة اللعب
   ========================= */
-
   if (phase === "playing") {
     const remainingSeconds = Math.max(ROUND_LIMIT - seconds, 0);
-
     return (
-      <>
-        <Helmet>
-          <title>جاري اللعب - الكلمة الممنوعة | ونسنا</title>
-          <meta name="description" content={`الحوار مستمر! ${hostPlayer} يحاول استدراج ${guestPlayer} لقول الكلمة الممنوعة.`} />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h2 style={titleStyle}>الحوار مستمر 🎤</h2>
-          
-            <p style={textStyle}>المحاور</p>
-            <h2 style={textH2}>{hostPlayer}</h2>
-
-            <p style={textStyle}>الضيف</p>
-            <h2 style={textH2}>{guestPlayer}</h2>
-
-            <div style={timerStyle}>{formatTime(remainingSeconds)}</div>
-
-            <div style={buttonsContainerStyle}>
-              <button style={dangerButton} onClick={() => finishRound("said")}>
-                <strong>توقف</strong>
-                <small>قال الضيف الكلمة الممنوعة</small>
-              </button>
-
-              <button style={orangeButton} onClick={() => finishRound("guessed")}>
-                <strong>اكتشف الكلمة</strong>
-                <small>عرف الضيف الكلمة الممنوعة</small>
-              </button>
-            </div>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h2 style={titleStyle}>الحوار مستمر 🎤</h2>
+          <p style={textStyle}>المحاور: <span >{hostPlayer}</span><br />الضيف: <span >{guestPlayer}</span></p>
+          <div style={timerStyle}>{formatTime(remainingSeconds)}</div>
+          <div style={buttonsContainerStyle}>
+            <button style={dangerButton} onClick={() => finishRound("said")}>
+              <strong>توقف</strong><small>قال الضيف الكلمة الممنوعة</small>
+            </button>
+            <button style={orangeButton} onClick={() => finishRound("guessed")}>
+              <strong>اكتشف الكلمة</strong><small>عرف الضيف الكلمة الممنوعة</small>
+            </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة نتيجة الجولة
   ========================= */
-
   if (phase === "roundResult") {
     const lastResult = roundResults[roundResults.length - 1];
-
     let resultMessage = "";
-
-    if (lastResult?.type === "said") {
-      resultMessage = "المحاور نجح في استدراج الضيف للكلمة الممنوعة.";
-    } else if (lastResult?.type === "guessed") {
-      resultMessage = "الضيف كان فطين واكتشف الكلمة الممنوعة.";
-    } else if (lastResult?.type === "timeup") {
-      resultMessage = "الضيف صمد حتى نهاية الوقت.";
-    }
+    if (lastResult?.type === "said") resultMessage = "المحاور نجح في استدراج الضيف للكلمة الممنوعة.";
+    else if (lastResult?.type === "guessed") resultMessage = "الضيف كان فطين واكتشف الكلمة الممنوعة.";
+    else if (lastResult?.type === "timeup") resultMessage = "الضيف صمد حتى نهاية الوقت.";
 
     return (
-      <>
-        <Helmet>
-          <title>نتيجة الجولة - الكلمة الممنوعة | ونسنا</title>
-          <meta name="description" content={`${resultMessage} المحاور: ${hostPlayer}، الضيف: ${guestPlayer}.`} />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h1 style={titleStyle}>انتهت الجولة 😭</h1>
-
-            <p style={textStyle}>{resultMessage}</p>
-
-            <p style={textStyle}>المحاور</p>
-            <h2 style={textH2} dir="auto">
-              {hostPlayer}
-            </h2>
-
-            <p style={textStyle}>الضيف</p>
-            <h2 style={textH2} dir="auto">
-              {guestPlayer}
-            </h2>
-
-            <p style={textStyle}>
-              الوقت المستغرق:{" "}
-              <strong>{formatTime(lastResult?.time || 0)}</strong>
-            </p>
-
-            <button style={mainButton} onClick={nextRound}>
-              الجولة التالية
-            </button>
-          </div>
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>انتهت الجولة 😭</h1>
+          <p style={textStyle}>{resultMessage}</p>
+          <p style={textStyle}>المحاور</p><h2 dir="auto">{hostPlayer}</h2>
+          <p style={textStyle}>الضيف</p><h2 dir="auto">{guestPlayer}</h2>
+          <p style={textStyle}>الوقت المستغرق: <strong>{formatTime(lastResult?.time || 0)}</strong></p>
+          <button style={mainButton} onClick={nextRound}>الجولة التالية</button>
         </div>
-      </>
+      </div>
     );
   }
 
   /* =========================
       شاشة النتائج النهائية
   ========================= */
-
   if (phase === "finalResults") {
-    const hostWins = roundResults.filter((r) => r.type === "said");
-    const smartGuests = roundResults.filter((r) => r.type === "guessed");
+    const hostWins = roundResults.filter(r => r.type === "said");
+    const smartGuests = roundResults.filter(r => r.type === "guessed");
 
     function getAllTopResults(list, compareFn) {
       if (list.length === 0) return [];
-
       const sorted = [...list].sort(compareFn);
       const best = sorted[0];
-
-      return sorted.filter((item) => compareFn(item, best) === 0);
+      return sorted.filter(item => compareFn(item, best) === 0);
     }
 
-    const bestHosts =
-      hostWins.length > 0
-        ? getAllTopResults(hostWins, (a, b) => a.time - b.time)
-        : [];
-
-    const bestGuests = getAllTopResults(
-      roundResults,
-      (a, b) => b.time - a.time
-    );
-
-    const bestSmartGuests =
-      smartGuests.length > 0
-        ? getAllTopResults(smartGuests, (a, b) => a.time - b.time)
-        : [];
+    const bestHosts = hostWins.length > 0
+      ? getAllTopResults(hostWins, (a, b) => a.time - b.time)
+      : [];
+    const bestGuests = getAllTopResults(roundResults, (a, b) => b.time - a.time);
+    const bestSmartGuests = smartGuests.length > 0
+      ? getAllTopResults(smartGuests, (a, b) => a.time - b.time)
+      : [];
 
     return (
-      <>
-        <Helmet>
-          <title>النتائج النهائية - الكلمة الممنوعة | ونسنا</title>
-          <meta name="description" content="شوف أفضل محاور وأفضل ضيف في لعبة الكلمة الممنوعة. مين فاز في التحدي؟" />
-          <link rel="canonical" href="https://wansna.vercel.app/play/forbidden-word" />
-        </Helmet>
-        <div style={pageStyle}>
-          <div style={cardStyle}>
-            <h1 style={titleStyle}>انتهت اللعبة 🏆</h1>
-
-            <div style={winnerGridStyle}>
-              <div style={winnerCardStyle}>
-                <div style={winnerIconStyle}>🎤👑</div>
-                <p style={roleLabelStyle}>أفضل محاور</p>
-                <p style={winnerDescriptionStyle}>أسرع شخص أسقط ضيفًا</p>
-
-                {bestHosts.length > 0 ? (
-                  bestHosts.map((h, i) => (
-                    <div key={i}>
-                      <h2 style={textH2} dir="auto">
-                        {h.host}
-                      </h2>
-                      <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p style={textStyle}>ما أحد أسقط ضيفه 😭</p>
-                )}
-              </div>
-
-              <div style={winnerCardStyle}>
-                <div style={winnerIconStyle}>🛡️👑</div>
-                <p style={roleLabelStyle}>أفضل ضيف</p>
-                <p style={winnerDescriptionStyle}>
-                  أطول شخص صمد أمام المحاور
-                </p>
-
-                {bestGuests.map((g, i) => (
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>انتهت اللعبة 🏆</h1>
+          <div style={winnerGridStyle}>
+            <div style={winnerCardStyle}>
+              <div style={winnerIconStyle}>🎤👑</div>
+              <p style={roleLabelStyle}>أفضل محاور</p>
+              <p style={winnerDescriptionStyle}>أسرع شخص أسقط ضيفًا</p>
+              {bestHosts.length > 0 ? (
+                bestHosts.map((h, i) => (
                   <div key={i}>
-                    <h2 style={textH2} dir="auto">
-                      {g.guest}
-                    </h2>
-                    <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={smartGuestCardStyle}>
-              <div style={winnerIconStyle}>🧠✨</div>
-              <p style={roleLabelStyle}>الضيف الفطين</p>
-              <p style={winnerDescriptionStyle}>أسرع شخص اكتشف الكلمة</p>
-
-              {bestSmartGuests.length > 0 ? (
-                bestSmartGuests.map((s, i) => (
-                  <div key={i}>
-                    <h2 dir="auto" style={textH2}>{s.guest}</h2>
-                    <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
+                    <h2 dir="auto">{h.host}</h2>
+                    <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
                   </div>
                 ))
               ) : (
-                <p style={textStyle}>ما أحد اكتشف الكلمة هذه المرة</p>
+                <p style={textStyle}>ما أحد أسقط ضيفه 😭</p>
               )}
             </div>
-
-            <h3 style={{ marginTop: "24px" }}>تفاصيل الجولات</h3>
-
-            {roundResults.map((result, index) => (
-              <div key={index} style={resultItemStyle}>
-                <span>الجولة {index + 1}: </span>
-                <span dir="auto">{result.host}</span>
-                <span> مع </span>
-                <span dir="auto">{result.guest}</span>
-                <span> — {formatTime(result.time)}</span>
-              </div>
-            ))}
-
-            <br />
-
-            {/* مشاركة اللعبة */}
-            <div
-              style={{
-                marginTop: "18px",
-                marginBottom: "10px",
-              }}
-            >
-              <p
-                style={{
-                  color: "#777",
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  marginBottom: "10px",
-                  fontFamily: "Cairo, sans-serif",
-                }}
-              >
-                أعجبتك اللعبة؟ شاركها مع أصدقائك 🎮
-              </p>
-
-              <button
-                style={{
-                  ...mainButton,
-                  background: "#6DD086",
-                  marginTop: 0,
-                }}
-                onClick={shareGame}
-              >
-                😎 شارك اللعبة
-              </button>
+            <div style={winnerCardStyle}>
+              <div style={winnerIconStyle}>🛡️👑</div>
+              <p style={roleLabelStyle}>أفضل ضيف</p>
+              <p style={winnerDescriptionStyle}>أطول شخص صمد أمام المحاور</p>
+              {bestGuests.map((g, i) => (
+                <div key={i}>
+                  <h2 dir="auto">{g.guest}</h2>
+                  <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
+                </div>
+              ))}
             </div>
-
-            <button style={mainButton} onClick={() => navigate("/games")}>
-              رجوع للألعاب
-            </button>
           </div>
+          <div style={smartGuestCardStyle}>
+            <div style={winnerIconStyle}>🧠✨</div>
+            <p style={roleLabelStyle}>الضيف الفطين</p>
+            <p style={winnerDescriptionStyle}>أسرع شخص اكتشف الكلمة</p>
+            {bestSmartGuests.length > 0 ? (
+              bestSmartGuests.map((s, i) => (
+                <div key={i}>
+                  <h2 dir="auto">{s.guest}</h2>
+                  <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
+                </div>
+              ))
+            ) : (
+              <p style={textStyle}>ما أحد اكتشف الكلمة هذه المرة</p>
+            )}
+          </div>
+          <h3 style={{ marginTop: "24px" }}>تفاصيل الجولات</h3>
+          {roundResults.map((result, index) => (
+            <div key={index} style={resultItemStyle}>
+              <span>الجولة {index + 1}: </span>
+              <span dir="auto">{result.host}</span>
+              <span> مع </span>
+              <span dir="auto">{result.guest}</span>
+              <span> — {formatTime(result.time)}</span>
+            </div>
+          ))}
+          <br />
+          <button style={mainButton} onClick={() => navigate("/games")}>رجوع للألعاب</button>
         </div>
-      </>
+      </div>
     );
   }
 }
@@ -779,65 +491,52 @@ export default function ForbiddenWord() {
 /* =========================
     التنسيقات (CSS-in-JS)
 ========================= */
-
-const textH2 = {
-  fontFamily: "Cairo, sans-serif",
-  fontSize: "28px",
-  fontWeight: "900",
-  color: "#444",
-  margin: "8px 0"
-};
-
 const pageStyle = {
   minHeight: "100dvh",
-  background: "#F7F5FF",
+  background: "#f7f5ff",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "30px",
-  paddingBottom: "60px",
+  padding: "24px",
   boxSizing: "border-box",
   fontFamily: "Cairo, sans-serif"
 };
 
 const cardStyle = {
-  background: "#ffffff",
+  background: "white",
   width: "100%",
-  maxWidth: "550px",
+  maxWidth: "520px",
   padding: "28px",
-  borderRadius: "32px",
+  borderRadius: "24px",
   textAlign: "center",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.1)" // تم إصلاحها
+  boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
 };
 
 const titleStyle = {
   color: "#6C4CF1",
   marginTop: 0,
-  marginBottom: "16px",
+  marginBottom: "12px",
   fontFamily: "Cairo, sans-serif",
-  fontSize: "36px",
-  fontWeight: "900",
-  lineHeight: 1.3
+  fontSize: "30px",
+  fontWeight: 700,
+  padding: "6px"
 };
 
 const textStyle = {
   color: "#777",
-  fontSize: "17px",
-  fontWeight: "700",
-  lineHeight: 1.8,
-  fontFamily: "Cairo, sans-serif"
+  lineHeight: 1.8
 };
 
 const mainButton = {
   width: "100%",
-  minHeight: "74px",
-  padding: "14px",
+  minHeight: "76px",
+  padding: "10px",
   background: "#6C4CF1",
   color: "white",
   border: "none",
-  borderRadius: "24px",
-  fontSize: "18px",
-  fontWeight: "900",
+  borderRadius: "14px",
+  fontSize: "17px",
+  fontWeight: 700,
   cursor: "pointer",
   fontFamily: "Cairo, sans-serif",
   display: "flex",
@@ -846,54 +545,40 @@ const mainButton = {
   alignItems: "center",
   gap: "4px",
   lineHeight: 1.4,
-  marginBottom: "12px",
-  boxShadow: "0 8px 18px rgba(108,76,241,0.18)"
+  marginBottom: "12px"
 };
 
-const greenButton = {
-  ...mainButton,
-  background: "#7BC99E"
-};
-
-const dangerButton = {
-  ...mainButton,
-  background: "#FF7A9A"
-};
-
-const orangeButton = {
-  ...mainButton,
-  background: "#F6C56F"
-};
+const greenButton = { ...mainButton, background: "#2f9e44" };
+const dangerButton = { ...mainButton, background: "#ff4d6d" };
+const orangeButton = { ...mainButton, background: "#f59f00" };
 
 const buttonsContainerStyle = {
   display: "flex",
   flexDirection: "column",
-  gap: "14px",
-  marginTop: "22px"
+  gap: "12px",
+  marginTop: "20px"
 };
 
 const roleCardStyle = {
-  background: "#F1E7FF",
-  padding: "18px",
-  borderRadius: "26px",
-  marginTop: "16px",
-  boxShadow: "0 6px 16px rgba(108,76,241,0.08)"
+  background: "#f7f5ff",
+  padding: "16px",
+  borderRadius: "18px",
+  marginTop: "16px"
 };
 
 const roleLabelStyle = {
   color: "#6C4CF1",
-  fontWeight: "900",
+  fontWeight: 700,
   marginBottom: "6px",
-  fontSize: "16px",
   fontFamily: "Cairo, sans-serif"
 };
 
 const wordCardStyle = {
-  background: "#FFE8F1",
+  background: "#fff0f6",
   padding: "32px 22px",
-  borderRadius: "28px",
+  borderRadius: "22px",
   marginTop: "22px",
-  border: "2px dashed #FF8AB3",
+  border: "2px dashed #ff4d8d",
   minHeight: "120px",
   display: "flex",
   flexDirection: "column",
@@ -904,10 +589,9 @@ const wordCardStyle = {
 const forbiddenWordStyle = {
   margin: 0,
   fontFamily: "Cairo, sans-serif",
-  fontSize: "46px",
-  fontWeight: "900",
-  lineHeight: 1.4,
-  color: "#444",
+  fontSize: "42px",
+  lineHeight: 1.6,
+  color: "#222",
   wordBreak: "break-word"
 };
 
@@ -915,12 +599,11 @@ const timerStyle = {
   background: "#6C4CF1",
   color: "white",
   padding: "24px",
-  borderRadius: "28px",
-  fontSize: "52px",
-  fontWeight: "900",
+  borderRadius: "20px",
+  fontSize: "48px",
+  fontWeight: 700,
   margin: "24px 0",
-  fontFamily: "Cairo, sans-serif",
-  boxShadow: "0 10px 24px rgba(108,76,241,0.20)"
+  fontFamily: "Cairo, sans-serif"
 };
 
 const winnerGridStyle = {
@@ -931,9 +614,9 @@ const winnerGridStyle = {
 };
 
 const winnerCardStyle = {
-  background: "#F1E7FF",
-  padding: "18px",
-  borderRadius: "26px",
+  background: "#f7f5ff",
+  padding: "16px",
+  borderRadius: "18px",
   textAlign: "center",
   minHeight: "220px",
   display: "flex",
@@ -942,43 +625,36 @@ const winnerCardStyle = {
 };
 
 const smartGuestCardStyle = {
-  background: "#FFF3C7",
-  padding: "18px",
-  borderRadius: "26px",
+  background: "#fff8e1",
+  padding: "16px",
+  borderRadius: "18px",
   textAlign: "center",
   marginTop: "12px"
 };
 
-const winnerIconStyle = {
-  fontSize: "38px",
-  marginBottom: "6px"
-};
+const winnerIconStyle = { fontSize: "34px", marginBottom: "6px" };
 
 const winnerDescriptionStyle = {
   color: "#888",
   fontSize: "14px",
-  fontWeight: "700",
   lineHeight: 1.6,
   minHeight: "45px",
-  marginTop: "4px",
-  fontFamily: "Cairo, sans-serif"
+  marginTop: "4px"
 };
 
 const winnerTimeStyle = {
-  fontSize: "20px",
-  fontWeight: "900",
+  fontSize: "18px",
+  fontWeight: "700",
   color: "#6C4CF1",
   marginTop: "8px",
   fontFamily: "Cairo, sans-serif"
 };
 
 const resultItemStyle = {
-  background: "#F7F5FF",
+  background: "#f7f5ff",
   padding: "14px",
-  borderRadius: "20px",
+  borderRadius: "14px",
   marginTop: "10px",
-  fontWeight: "800",
-  color: "#555",
-  lineHeight: 1.8,
-  fontFamily: "Cairo, sans-serif"
+  fontWeight: 700,
+  lineHeight: 1.8
 };

@@ -278,7 +278,7 @@ export default function ForbiddenWord() {
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <h2>ما فيه لاعبين محفوظين</h2>
+          <h2 style={defaultTextStyle}>ما فيه لاعبين محفوظين</h2>
           <button style={mainButton} onClick={() => navigate("/games")}>رجوع للألعاب</button>
         </div>
       </div>
@@ -293,7 +293,7 @@ export default function ForbiddenWord() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>كلمة ممنوعة 🤫</h1>
-          <p style={textStyle}>اختاروا موضوع اللعبة</p>
+          <p style={textStyle}>اختاروا موضوعاً اللعبة</p>
           {Object.entries(categories).map(([key, item]) => (
             <button key={key} style={mainButton} onClick={() => createRounds(key)}>
               {item.title}
@@ -315,11 +315,15 @@ export default function ForbiddenWord() {
           <h1 style={titleStyle}>الجولة بين</h1>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>المحاور</p>
-            <h2 dir="auto">{hostPlayer}</h2>
+            <h2 dir="auto" style={defaultTextStyle}>
+              {hostPlayer}
+            </h2>
           </div>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>الضيف</p>
-            <h2 dir="auto">{guestPlayer}</h2>
+            <h2 dir="auto" style={defaultTextStyle}>
+              {guestPlayer}
+            </h2>
           </div>
           <p style={textStyle}>مرروا الجوال للمحاور</p>
           <button style={mainButton} onClick={() => setPhase("hostBrief")}>هذا أنا، ابدأ</button>
@@ -392,8 +396,8 @@ export default function ForbiddenWord() {
         <div style={cardStyle}>
           <h1 style={titleStyle}>انتهت الجولة 😭</h1>
           <p style={textStyle}>{resultMessage}</p>
-          <p style={textStyle}>المحاور</p><h2 dir="auto">{hostPlayer}</h2>
-          <p style={textStyle}>الضيف</p><h2 dir="auto">{guestPlayer}</h2>
+          <p style={textStyle}>المحاور</p><h2 style={defaultTextStyle} dir="auto">{hostPlayer}</h2>
+          <p style={textStyle}>الضيف</p><h2 style={defaultTextStyle} dir="auto">{guestPlayer}</h2>
           <p style={textStyle}>الوقت المستغرق: <strong>{formatTime(lastResult?.time || 0)}</strong></p>
           <button style={mainButton} onClick={nextRound}>الجولة التالية</button>
         </div>
@@ -435,7 +439,9 @@ export default function ForbiddenWord() {
               {bestHosts.length > 0 ? (
                 bestHosts.map((h, i) => (
                   <div key={i}>
-                    <h2 dir="auto">{h.host}</h2>
+                    <h2 dir="auto" style={defaultTextStyle}>
+                      {h.host}
+                    </h2>
                     <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
                   </div>
                 ))
@@ -449,7 +455,9 @@ export default function ForbiddenWord() {
               <p style={winnerDescriptionStyle}>أطول شخص صمد أمام المحاور</p>
               {bestGuests.map((g, i) => (
                 <div key={i}>
-                  <h2 dir="auto">{g.guest}</h2>
+                  <h2 dir="auto" style={defaultTextStyle}>
+                    {g.guest}
+                  </h2>
                   <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
                 </div>
               ))}
@@ -462,7 +470,9 @@ export default function ForbiddenWord() {
             {bestSmartGuests.length > 0 ? (
               bestSmartGuests.map((s, i) => (
                 <div key={i}>
-                  <h2 dir="auto">{s.guest}</h2>
+                  <h2 dir="auto" style={defaultTextStyle}>
+                    {s.guest}
+                  </h2>
                   <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
                 </div>
               ))
@@ -657,4 +667,10 @@ const resultItemStyle = {
   marginTop: "10px",
   fontWeight: 700,
   lineHeight: 1.8
+};
+
+const defaultTextStyle = {
+  fontFamily: "Cairo, sans-serif",
+  fontWeight: 700,
+  color: "#222"
 };

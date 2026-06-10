@@ -1,20 +1,13 @@
-// نستورد useEffect, useState, useRef من React
 import { useEffect, useState, useRef } from "react";
-// نستورد useNavigate للتنقل بين الصفحات
 import { useNavigate } from "react-router-dom";
 
-// مدة الجولة: دقيقتان = 120 ثانية
-const ROUND_LIMIT = 120;
+const ROUND_LIMIT = 120; // دقيقتان
 
-// ====== كائن الصوت العام (سيتم إنشاؤه عند الحاجة) ======
 let audioCtx = null;
 
-// ====== دوال الصوت ======
-// تجهيز AudioContext (يُستدعى عند أول تفاعل)
 function prepareAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // تشغيل صوت صامت لتفعيل الإذن
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     gain.gain.value = 0;
@@ -27,7 +20,6 @@ function prepareAudio() {
   }
 }
 
-// تشغيل نغمة تنبيه قوية (عند نهاية الوقت)
 function playAlertBeep() {
   try {
     if (!audioCtx) return;
@@ -41,27 +33,10 @@ function playAlertBeep() {
     gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + 0.4);
-  } catch (e) { console.error("Error playing alert beep:", e); }
+  } catch (e) {
+    console.error("Error playing alert beep:", e);
+  }
 }
-
-// تشغيل نغمة خلفية هادئة مستمرة
-function startBackgroundTone() {
-  if (!audioCtx) return;
-  if (audioCtx.state === "suspended") audioCtx.resume();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = 180;
-  gain.gain.value = 0.06;
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  return { osc, gain };
-}
-
-/* =========================
-    دوال مساعدة خارج المكوّن
-========================= */
 
 function getRandomIndex(length) {
   return Math.floor(Math.random() * length);
@@ -91,14 +66,10 @@ function buildRounds(players, words) {
     return {
       guest,
       host,
-      word: shuffledWords[index % shuffledWords.length]
+      word: shuffledWords[index % shuffledWords.length],
     };
   });
 }
-
-/* =========================
-    مكوّن اللعبة الرئيسي
-========================= */
 
 export default function ForbiddenWord() {
   const navigate = useNavigate();
@@ -117,57 +88,50 @@ export default function ForbiddenWord() {
   const [roundResults, setRoundResults] = useState([]);
 
   const timerRef = useRef(null);
-  const bgSoundRef = useRef(null);
 
-  /* =========================
-      فئات الكلمات (تمت إضافة كلمات جديدة)
-  ========================= */
   const categories = {
     food: {
       title: "الأكل والمشروبات 🍔",
       words: [
         "قهوة", "بيتزا", "شاورما", "مطعم", "جوع", "عصير", "حلى", "سبايسي",
         "كبسة", "فول", "تميس", "كنافة", "كبة", "فلافل", "حمص", "تبولة",
-        "مانجا", "فراولة", "موز", "برتقال", "ليمون", "لبن", "جبن", "عسل"
-      ]
+        "مانجا", "فراولة", "موز", "برتقال", "ليمون", "لبن", "جبن", "عسل",
+      ],
     },
     feelings: {
       title: "العلاقات والمشاعر 💔",
       words: [
         "حب", "زواج", "غيرة", "بلوك", "كراش", "زعل", "صداقة", "إعجاب",
         "مواعدة", "هدية", "بوسة", "حضن", "فراق", "لقاء", "حنين", "وعد",
-        "عتاب", "صلح", "حبوبة", "حبيبي", "قلب", "روح", "عمري", "عيون"
-      ]
+        "عتاب", "صلح", "حبوبة", "حبيبي", "قلب", "روح", "عمري", "عيون",
+      ],
     },
     tech: {
       title: "الألعاب والتقنية 🎮",
       words: [
         "جوال", "شاحن", "تيك توك", "إنترنت", "تصوير", "لايف", "بلايستيشن", "سماعة",
         "سناب", "واتساب", "انستغرام", "فيس", "تابلت", "لابتوب", "واي فاي", "بلوتوث",
-        "شاشة", "كيبورد", "ماوس", "قرص", "ذاكرة", "بطارية", "سيلفي", "فلتر"
-      ]
+        "شاشة", "كيبورد", "ماوس", "قرص", "ذاكرة", "بطارية", "سيلفي", "فلتر",
+      ],
     },
     daily: {
       title: "الحياة اليومية 🏫",
       words: [
         "دوام", "نوم", "تأخير", "اختبار", "مدرسة", "جامعة", "واجب", "مشوار",
         "مكيف", "مصباح", "مفتاح", "باب", "شباك", "سجاد", "مخدة", "حرام",
-        "فطور", "غدا", "عشا", "دش", "مغسلة", "مراية", "ساعة", "جوال"
-      ]
+        "فطور", "غدا", "عشا", "دش", "مغسلة", "مراية", "ساعة", "جوال",
+      ],
     },
     travel: {
       title: "السفر والترفيه ✈️",
       words: [
         "سفر", "مطار", "بحر", "فندق", "إجازة", "سيارة", "طلعة", "تصوير",
         "شنطة", "تذكرة", "باسبور", "تأشيرة", "رحلة", "جزيرة", "شاطئ", "مسبح",
-        "خيمة", "شلال", "جبل", "سحاب", "غروب", "شمس", "قمر", "نجوم"
-      ]
-    }
+        "خيمة", "شلال", "جبل", "سحاب", "غروب", "شمس", "قمر", "نجوم",
+      ],
+    },
   };
 
-  /* =========================
-      إدارة المؤقت
-  ========================= */
   useEffect(() => {
     let timer;
     if (isRunning) {
@@ -180,12 +144,7 @@ export default function ForbiddenWord() {
 
   useEffect(() => {
     if (isRunning && seconds >= ROUND_LIMIT) {
-      if (bgSoundRef.current) {
-        const { osc, gain } = bgSoundRef.current;
-        osc.stop();
-        gain.disconnect();
-        bgSoundRef.current = null;
-      }
+      // لا يوجد صوت خلفي لنوقفه؛ نشغل التنبيه النهائي فقط
       playAlertBeep();
       finishRound("timeup");
     }
@@ -197,10 +156,6 @@ export default function ForbiddenWord() {
     const secs = totalSeconds % 60;
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
-
-  /* =========================
-      دوال بدء وإنهاء الجولات
-  ========================= */
 
   function createRounds(categoryKey) {
     prepareAudio();
@@ -218,26 +173,15 @@ export default function ForbiddenWord() {
   }
 
   function startTimer() {
-    prepareAudio();
-    if (bgSoundRef.current) {
-      const { osc, gain } = bgSoundRef.current;
-      osc.stop();
-      gain.disconnect();
-      bgSoundRef.current = null;
-    }
-    bgSoundRef.current = startBackgroundTone();
+    prepareAudio(); // تجهيز السياق الصوتي للإذن
     setSeconds(0);
     setIsRunning(true);
     setPhase("playing");
+    // لا يوجد أي صوت يبدأ هنا
   }
 
   function finishRound(resultType) {
-    if (bgSoundRef.current) {
-      const { osc, gain } = bgSoundRef.current;
-      try { osc.stop(); } catch (e) { console.error("Error stopping background tone:", e); }
-      gain.disconnect();
-      bgSoundRef.current = null;
-    }
+    // لم نعد نوقف أي نغمة خلفية
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -249,7 +193,7 @@ export default function ForbiddenWord() {
       guest: guestPlayer,
       word: forbiddenWord,
       time: seconds,
-      type: resultType
+      type: resultType,
     };
     setRoundResults((prev) => [...prev, result]);
     setPhase("roundResult");
@@ -271,9 +215,6 @@ export default function ForbiddenWord() {
     setPhase("roundIntro");
   }
 
-  /* =========================
-      حالة عدم وجود لاعبين
-  ========================= */
   if (players.length === 0) {
     return (
       <div style={pageStyle}>
@@ -285,9 +226,6 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة اختيار الفئة
-  ========================= */
   if (phase === "category") {
     return (
       <div style={pageStyle}>
@@ -304,9 +242,6 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة مقدمة الجولة
-  ========================= */
   if (phase === "roundIntro") {
     return (
       <div style={pageStyle}>
@@ -315,15 +250,11 @@ export default function ForbiddenWord() {
           <h1 style={titleStyle}>الجولة بين</h1>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>المحاور</p>
-            <h2 dir="auto" style={defaultTextStyle}>
-              {hostPlayer}
-            </h2>
+            <h2 dir="auto" style={defaultTextStyle}>{hostPlayer}</h2>
           </div>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>الضيف</p>
-            <h2 dir="auto" style={defaultTextStyle}>
-              {guestPlayer}
-            </h2>
+            <h2 dir="auto" style={defaultTextStyle}>{guestPlayer}</h2>
           </div>
           <p style={textStyle}>مرروا الجوال للمحاور</p>
           <button style={mainButton} onClick={() => setPhase("hostBrief")}>هذا أنا، ابدأ</button>
@@ -332,9 +263,6 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة تعليمات المحاور
-  ========================= */
   if (phase === "hostBrief") {
     return (
       <div style={pageStyle}>
@@ -345,7 +273,7 @@ export default function ForbiddenWord() {
             <p style={roleLabelStyle}>الكلمة الممنوعة</p>
             <h1 style={forbiddenWordStyle}>{forbiddenWord}</h1>
           </div>
-          <p style={textStyle}>عند بداية الحوار اضغط ابدأ. لديك دقيقتان.</p>
+          <p style={textStyle}>عند بداية الحوار اضغط ابدأ. لديك دقيقتان</p>
           <div style={buttonsContainerStyle}>
             <button style={greenButton} onClick={startTimer}>
               <strong>ابدأ</strong>
@@ -357,16 +285,13 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة اللعب
-  ========================= */
   if (phase === "playing") {
     const remainingSeconds = Math.max(ROUND_LIMIT - seconds, 0);
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h2 style={titleStyle}>الحوار مستمر 🎤</h2>
-          <p style={textStyle}>المحاور: <span >{hostPlayer}</span><br />الضيف: <span >{guestPlayer}</span></p>
+          <p style={textStyle}>المحاور: <span>{hostPlayer}</span><br />الضيف: <span>{guestPlayer}</span></p>
           <div style={timerStyle}>{formatTime(remainingSeconds)}</div>
           <div style={buttonsContainerStyle}>
             <button style={dangerButton} onClick={() => finishRound("said")}>
@@ -381,15 +306,12 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة نتيجة الجولة
-  ========================= */
   if (phase === "roundResult") {
     const lastResult = roundResults[roundResults.length - 1];
     let resultMessage = "";
-    if (lastResult?.type === "said") resultMessage = "المحاور نجح في استدراج الضيف للكلمة الممنوعة.";
-    else if (lastResult?.type === "guessed") resultMessage = "الضيف كان فطين واكتشف الكلمة الممنوعة.";
-    else if (lastResult?.type === "timeup") resultMessage = "الضيف صمد حتى نهاية الوقت.";
+    if (lastResult?.type === "said") resultMessage = "المحاور نجح في استدراج الضيف للكلمة الممنوعة";
+    else if (lastResult?.type === "guessed") resultMessage = "الضيف كان فطين واكتشف الكلمة الممنوعة";
+    else if (lastResult?.type === "timeup") resultMessage = "الضيف صمد حتى نهاية الوقت";
 
     return (
       <div style={pageStyle}>
@@ -405,9 +327,6 @@ export default function ForbiddenWord() {
     );
   }
 
-  /* =========================
-      شاشة النتائج النهائية
-  ========================= */
   if (phase === "finalResults") {
     const hostWins = roundResults.filter(r => r.type === "said");
     const smartGuests = roundResults.filter(r => r.type === "guessed");
@@ -439,9 +358,7 @@ export default function ForbiddenWord() {
               {bestHosts.length > 0 ? (
                 bestHosts.map((h, i) => (
                   <div key={i}>
-                    <h2 dir="auto" style={defaultTextStyle}>
-                      {h.host}
-                    </h2>
+                    <h2 dir="auto" style={defaultTextStyle}>{h.host}</h2>
                     <p style={winnerTimeStyle}>{formatTime(h.time)}</p>
                   </div>
                 ))
@@ -455,9 +372,7 @@ export default function ForbiddenWord() {
               <p style={winnerDescriptionStyle}>أطول شخص صمد أمام المحاور</p>
               {bestGuests.map((g, i) => (
                 <div key={i}>
-                  <h2 dir="auto" style={defaultTextStyle}>
-                    {g.guest}
-                  </h2>
+                  <h2 dir="auto" style={defaultTextStyle}>{g.guest}</h2>
                   <p style={winnerTimeStyle}>{formatTime(g.time)}</p>
                 </div>
               ))}
@@ -470,9 +385,7 @@ export default function ForbiddenWord() {
             {bestSmartGuests.length > 0 ? (
               bestSmartGuests.map((s, i) => (
                 <div key={i}>
-                  <h2 dir="auto" style={defaultTextStyle}>
-                    {s.guest}
-                  </h2>
+                  <h2 dir="auto" style={defaultTextStyle}>{s.guest}</h2>
                   <p style={winnerTimeStyle}>{formatTime(s.time)}</p>
                 </div>
               ))
@@ -499,7 +412,7 @@ export default function ForbiddenWord() {
 }
 
 /* =========================
-    التنسيقات (CSS-in-JS)
+    التنسيقات
 ========================= */
 const pageStyle = {
   minHeight: "100dvh",

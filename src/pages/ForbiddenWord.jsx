@@ -393,11 +393,11 @@ export default function ForbiddenWord() {
           <h1 style={titleStyle}>الجولة بين</h1>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>المحاور</p>
-            <h2 dir="auto">{hostPlayer}</h2>
+            <h2 dir="auto" style={tinyStyle}>{hostPlayer}</h2>
           </div>
           <div style={roleCardStyle}>
             <p style={roleLabelStyle}>الضيف</p>
-            <h2 dir="auto">{guestPlayer}</h2>
+            <h2 dir="auto" style={tinyStyle}>{guestPlayer}</h2>
           </div>
           <p style={textStyle}>مرروا الجوال للمحاور</p>
           <button style={mainButton} onClick={() => setPhase("hostBrief")}>هذا أنا، ابدأ</button>
@@ -657,6 +657,13 @@ const roleCardStyle = {
 
 const roleLabelStyle = {
   color: "#6C4CF1",
+  fontWeight: 700,
+  marginBottom: "6px",
+  fontFamily: "Cairo, sans-serif"
+};
+
+const tinyStyle = {
+  color: "#111112",
   fontWeight: 700,
   marginBottom: "6px",
   fontFamily: "Cairo, sans-serif"
